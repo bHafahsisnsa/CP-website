@@ -1,0 +1,413 @@
+{
+  "meta": {
+    "app": "collector_parfum",
+    "format": "collector-parfum-backup",
+    "version": 1,
+    "created_at": "2026-08-03T09:48:08.952077+00:00",
+    "db_name": "test_database",
+    "collections": [
+      "occasions",
+      "characters",
+      "categories"
+    ],
+    "counts": {
+      "occasions": 8,
+      "characters": 12,
+      "categories": 6
+    }
+  },
+  "data": {
+    "occasions": [
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7d0"
+        },
+        "slug": "office",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.753601+00:00",
+        "desc": "Rapi & profesional untuk keseharian kerja.",
+        "icon": "briefcase",
+        "id": "occ_ba2566eb88b84897",
+        "name": "Office",
+        "order": 1
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7d2"
+        },
+        "slug": "gym",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.753878+00:00",
+        "desc": "Segar & bertenaga saat aktif bergerak.",
+        "icon": "dumbbell",
+        "id": "occ_abff0898caeb474c",
+        "name": "Gym",
+        "order": 2
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7d4"
+        },
+        "slug": "date-night",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.754363+00:00",
+        "desc": "Sensual & memikat untuk momen berdua.",
+        "icon": "wine",
+        "id": "occ_505be56696dd4cbc",
+        "name": "Date Night",
+        "order": 3
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7d6"
+        },
+        "slug": "daily-wear",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.754756+00:00",
+        "desc": "Ringan & effortless untuk setiap hari.",
+        "icon": "sun",
+        "id": "occ_1070f2a3cc354aa2",
+        "name": "Daily Wear",
+        "order": 4
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7d8"
+        },
+        "slug": "traveling",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.755042+00:00",
+        "desc": "Fleksibel menemani perjalanan.",
+        "icon": "plane",
+        "id": "occ_56de214e0c894f75",
+        "name": "Traveling",
+        "order": 5
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7da"
+        },
+        "slug": "evening",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.755315+00:00",
+        "desc": "Elegan & dalam untuk malam hari.",
+        "icon": "moon",
+        "id": "occ_58ffc8bcf5bf4480",
+        "name": "Evening",
+        "order": 6
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7dc"
+        },
+        "slug": "party",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.755589+00:00",
+        "desc": "Berani & menonjol di keramaian.",
+        "icon": "party-popper",
+        "id": "occ_326d5aae7e964297",
+        "name": "Party",
+        "order": 7
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7de"
+        },
+        "slug": "wedding",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.755850+00:00",
+        "desc": "Anggun & berkesan untuk hari istimewa.",
+        "icon": "gem",
+        "id": "occ_649cd57679c6476d",
+        "name": "Wedding",
+        "order": 8
+      }
+    ],
+    "characters": [
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7e0"
+        },
+        "slug": "fresh",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.756236+00:00",
+        "desc": "Sejuk, bersih, menyegarkan.",
+        "icon": "leaf",
+        "id": "chr_793cffe1f08c415d",
+        "name": "Fresh",
+        "order": 1
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7e2"
+        },
+        "slug": "floral",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.756548+00:00",
+        "desc": "Anggun & romantis penuh bunga.",
+        "icon": "flower-2",
+        "id": "chr_2490502c3b1b4b5c",
+        "name": "Floral",
+        "order": 2
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7e4"
+        },
+        "slug": "gourmand",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.756811+00:00",
+        "desc": "Manis, hangat, addictive.",
+        "icon": "ice-cream",
+        "id": "chr_99c12aff851c4d17",
+        "name": "Gourmand",
+        "order": 3
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7e6"
+        },
+        "slug": "woody",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.757066+00:00",
+        "desc": "Hangat, membumi, berkarakter.",
+        "icon": "tree-pine",
+        "id": "chr_83539e1ccceb43f9",
+        "name": "Woody",
+        "order": 4
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7e8"
+        },
+        "slug": "citrus",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.757327+00:00",
+        "desc": "Ceria & penuh energi jeruk.",
+        "icon": "citrus",
+        "id": "chr_b1b2c300cc8a4d00",
+        "name": "Citrus",
+        "order": 5
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7ea"
+        },
+        "slug": "musky",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.757588+00:00",
+        "desc": "Lembut, clean, dekat di kulit.",
+        "icon": "feather",
+        "id": "chr_a019b096065e477f",
+        "name": "Musky",
+        "order": 6
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7ec"
+        },
+        "slug": "aquatic",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.757837+00:00",
+        "desc": "Sejuknya angin laut.",
+        "icon": "waves",
+        "id": "chr_0b8579ae8f184013",
+        "name": "Aquatic",
+        "order": 7
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7ee"
+        },
+        "slug": "spicy",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.758077+00:00",
+        "desc": "Hangat berapi dengan rempah.",
+        "icon": "flame",
+        "id": "chr_46c4df2acee74a1a",
+        "name": "Spicy",
+        "order": 8
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7f0"
+        },
+        "slug": "rose",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.758325+00:00",
+        "desc": "Mawar yang sensual & dewasa.",
+        "icon": "flower",
+        "id": "chr_5b17b9fe7c694f5f",
+        "name": "Rose",
+        "order": 9
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7f2"
+        },
+        "slug": "powdery",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.758560+00:00",
+        "desc": "Halus seperti bedak & sutra.",
+        "icon": "cloud",
+        "id": "chr_bf1633a695e74df2",
+        "name": "Powdery",
+        "order": 10
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7f4"
+        },
+        "slug": "green",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.758800+00:00",
+        "desc": "Segar dedaunan & herbal.",
+        "icon": "sprout",
+        "id": "chr_e5098ab715c54696",
+        "name": "Green",
+        "order": 11
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7f6"
+        },
+        "slug": "amber-oud",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.759037+00:00",
+        "desc": "Mewah, sensual, timeless.",
+        "icon": "sparkles",
+        "id": "chr_79e1977271514877",
+        "name": "Amber & Oud",
+        "order": 12
+      }
+    ],
+    "categories": [
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7c4"
+        },
+        "slug": "citrus",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.751555+00:00",
+        "desc": "Segar, ceria, penuh energi pagi.",
+        "id": "cat_58a5729616ad4430",
+        "name": "Citrus",
+        "seo": {
+          "title": "Citrus — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum citrus segar & ceria untuk energi harian.",
+          "keywords": [
+            "citrus",
+            "parfum",
+            "citrus"
+          ],
+          "og_image": null
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7c6"
+        },
+        "slug": "floral",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.752020+00:00",
+        "desc": "Anggun, romantis, klasik.",
+        "id": "cat_9be6abe67d8f4d83",
+        "name": "Floral",
+        "seo": {
+          "title": "Floral — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum floral anggun & romantis, klasik sepanjang masa.",
+          "keywords": [
+            "floral",
+            "parfum",
+            "floral"
+          ],
+          "og_image": null
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7c8"
+        },
+        "slug": "woody",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.752355+00:00",
+        "desc": "Hangat, tenang, membumi.",
+        "id": "cat_c918b2b45c594cf5",
+        "name": "Woody",
+        "seo": {
+          "title": "Woody — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum woody hangat & membumi, elegan berkarakter.",
+          "keywords": [
+            "woody",
+            "parfum",
+            "woody"
+          ],
+          "og_image": null
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7ca"
+        },
+        "slug": "gourmand",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.752705+00:00",
+        "desc": "Manis, addictive, cozy.",
+        "id": "cat_a4bad236e1b945b7",
+        "name": "Gourmand",
+        "seo": {
+          "title": "Gourmand — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum gourmand manis & cozy yang addictive.",
+          "keywords": [
+            "gourmand",
+            "parfum",
+            "gourmand"
+          ],
+          "og_image": null
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7cc"
+        },
+        "slug": "fresh",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.752992+00:00",
+        "desc": "Sejuk, bersih, effortless.",
+        "id": "cat_f330474958cc4d4d",
+        "name": "Fresh Aquatic",
+        "seo": {
+          "title": "Fresh Aquatic — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum fresh aquatic sejuk & bersih, effortless.",
+          "keywords": [
+            "fresh",
+            "parfum",
+            "fresh aquatic"
+          ],
+          "og_image": null
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6a7052f25bdd065c9b30e7ce"
+        },
+        "slug": "amber",
+        "active": true,
+        "created_at": "2026-08-03T08:57:09.753273+00:00",
+        "desc": "Mewah, sensual, timeless.",
+        "id": "cat_f9dd4aaa4a7d45ec",
+        "name": "Amber & Oud",
+        "seo": {
+          "title": "Amber & Oud — Koleksi Parfum | Collector Parfum",
+          "description": "Parfum amber & oud mewah, sensual, timeless.",
+          "keywords": [
+            "amber",
+            "parfum",
+            "amber & oud"
+          ],
+          "og_image": null
+        }
+      }
+    ]
+  }
+}

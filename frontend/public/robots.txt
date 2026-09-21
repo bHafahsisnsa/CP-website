@@ -1,0 +1,8 @@
+# Collector Parfum — robots (Epic E7)
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /keranjang
+
+Sitemap: /api/sitemap.xml

@@ -1,0 +1,89 @@
+{
+  "summary": "Iterasi 33 — Uji carousel auto-drift + Ken Burns + regresi layout/alur belanja. Backend 155 PASS. Carousel IDLE/HOVER/arrows/toggle bekerja di 5 lokasi (home best sellers, home new arrivals, home testimonials, PDP related 8 kartu, store reviews). Ken Burns hero + PDP galeri aktif, sheen kartu produk ada, occasion chips klik benar. Layout x=100 sejajar. Alur belanja guest lengkap (shop → PDP → keranjang → checkout → sukses CP00000027). Mobile 390x844 carousel gerak, kartu fit, filter sidebar tidak mount, galeri + sticky ATC bar OK. Console sweep 27 route (11 storefront + 16 admin) = 0 error, 0 warning. BUG KRITIS: tombol Jeda/Jalan carousel TIDAK menghormati jeda manual — saat user klik Jeda lalu pointer menjauh, carousel lanjut gerak (seharusnya tetap jeda sampai user klik Jalan).",
+  
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AutoCarousel (components/shared/AutoCarousel.js)",
+        "issue": "Manual pause NOT honored — ketika user klik tombol 'Jeda' (carousel-autoplay-toggle), carousel berhenti saat hover, tapi LANJUT GERAK lagi setelah pointer menjauh. Seharusnya: jeda manual dihormati sampai user klik 'Jalan' (WCAG 2.2.2). Root cause: toggle() memanggil setUserPaused(true) tapi button text tidak berubah dari 'Jeda' ke 'Jalan', dan release() callback tidak memeriksa pausedRef.current dengan benar setelah state update.",
+        "affected_selectors": ["[data-testid=carousel-autoplay-toggle]"],
+        "fix_priority": "HIGH",
+        "reproduction_steps": [
+          "1. Buka / (home), scroll ke best sellers carousel",
+          "2. Hover carousel → tombol 'Jeda' muncul",
+          "3. Klik 'Jeda' → carousel berhenti (benar)",
+          "4. Gerakkan pointer keluar carousel (unhover)",
+          "5. BUG: carousel lanjut gerak (seharusnya tetap jeda)",
+          "6. Expected: carousel tetap jeda sampai user hover lagi + klik 'Jalan'"
+        ],
+        "test_evidence": "Transform at t0: matrix(1,0,0,1,-138.6,0), Transform at t0+2s: matrix(1,0,0,1,-221.2,0) — carousel bergerak meski sudah diklik Jeda. Button text tetap 'Jeda' (tidak toggle ke 'Jalan')."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Backend: 155/155 tests PASS, 12 produk aktif, 0 produk QA/test",
+    "Carousel auto-drift IDLE: 5/5 lokasi bergerak pelan sendiri (best sellers, new arrivals, testimonials, PDP related, store reviews)",
+    "Carousel HOVER pause: 5/5 lokasi berhenti saat di-hover",
+    "Carousel arrow buttons: visible (opacity 1) saat hover, klik prev/next menggeser slide",
+    "Carousel toggle button: visible saat hover, posisi di bawah carousel (tidak menimpa 'Lihat Semua')",
+    "PDP related carousel: 8 kartu produk (sesuai spec)",
+    "Ken Burns hero: [data-testid=home-hero-media] punya animationName 'cp-kb'",
+    "Ken Burns PDP galeri: 4 elemen .cp-kb dengan animation aktif",
+    "Product card sheen: elemen .cp-sheen ada di [data-testid=product-card]",
+    "Occasion chips: href /shop?occasion=<slug> benar, klik navigasi ke shop dengan filter",
+    "Layout alignment 1920x950: header x=100, best sellers x=100 (sejajar)",
+    "Guest shopping flow: shop → PDP → tambah keranjang → qty +/- → checkout → isi alamat → pilih shipping/payment → order sukses (CP00000027)",
+    "Mobile 390x844: carousel gerak, kartu produk fit viewport, filter sidebar tidak mount, galeri carousel + dots OK, sticky ATC bar tidak tertutup FAB",
+    "Console sweep: 27 route (/, /shop, /parfum/*, /keranjang, /checkout, /voucher, /tentang, /kontak, /lokasi, /wishlist, /akun, /admin/*, /admin/produk, /admin/produk/impor, /admin/kategori, /admin/occasion, /admin/karakter, /admin/ulasan, /admin/pesanan, /admin/pembayaran, /admin/voucher, /admin/analitik, /admin/crm, /admin/konten, /admin/lokasi, /admin/pengaturan, /admin/backup) = 0 error, 0 warning (kecuali known warning cdn.tailwindcss.com di /admin/konten)",
+    "Filter katalog: default section (Kategori Aroma, Kisaran Harga) terbuka, occasion section expand OK, office filter klik OK, active chip muncul",
+    "Quick-add: tombol [data-testid=product-card-add-to-cart-button] klik berhasil"
+  ],
+  
+  "test_report_links": [
+    "/app/scripts/test_shop_and_import_e2e.py (backend, 155 PASS)",
+    "/root/.emergent/automation_output/20260803_112553/console_20260803_112553.log (home carousel)",
+    "/root/.emergent/automation_output/20260803_112724/console_20260803_112724.log (PDP)",
+    "/root/.emergent/automation_output/20260803_112750/console_20260803_112750.log (store reviews)",
+    "/root/.emergent/automation_output/20260803_112831/console_20260803_112831.log (guest shopping)",
+    "/root/.emergent/automation_output/20260803_112926/console_20260803_112926.log (mobile)",
+    "/root/.emergent/automation_output/20260803_113601/console_20260803_113601.log (console sweep)",
+    "/root/.emergent/automation_output/20260803_113753/console_20260803_113753.log (manual pause bug)"
+  ],
+  
+  "success_percentage": {
+    "backend": "100% (155/155)",
+    "frontend_carousel_movement": "100% (5/5 lokasi IDLE + HOVER bekerja)",
+    "frontend_carousel_controls": "80% (arrows + toggle visible OK, tapi manual pause bug)",
+    "frontend_ken_burns": "100% (hero + PDP galeri + sheen)",
+    "frontend_layout": "100% (alignment x=100)",
+    "frontend_shopping_flow": "100% (guest checkout sukses)",
+    "frontend_mobile": "100% (carousel + layout + filter)",
+    "frontend_console": "100% (0 error, 0 warning di 27 route)"
+  },
+  
+  "updated_files": [],
+  
+  "action_item_for_main_agent": {
+    "priority": "HIGH",
+    "items": [
+      {
+        "file": "/app/frontend/src/components/shared/AutoCarousel.js",
+        "issue": "Manual pause bug — toggle button 'Jeda'/'Jalan' tidak menghormati jeda manual user",
+        "fix": "Periksa toggle() function (line 78-88): pastikan setUserPaused(true) dipanggil DAN button text berubah dari 'Jeda' ke 'Jalan'. Periksa release() callback (line 72-76): pastikan pausedRef.current dicek SEBELUM memanggil a.play(). Kemungkinan race condition antara setUserPaused dan pausedRef.current update. Test: klik Jeda → unhover → carousel harus tetap jeda → hover lagi → klik Jalan → unhover → carousel lanjut gerak.",
+        "test_steps": "1. Buka /, scroll ke best sellers. 2. Hover carousel. 3. Klik 'Jeda' (button text harus jadi 'Jalan'). 4. Unhover (carousel tetap jeda). 5. Hover lagi, klik 'Jalan' (button text jadi 'Jeda'). 6. Unhover (carousel lanjut gerak)."
+      }
+    ],
+    "note": "Semua fitur lain (IDLE drift, HOVER pause, arrows, Ken Burns, layout, shopping flow, mobile, console) LULUS. Hanya manual pause toggle yang perlu diperbaiki. Main agent sudah uji sendiri dan LULUS menurut catatan, tapi testing independen menemukan bug ini — mungkin main agent hanya uji hover pause (yang bekerja), bukan manual pause toggle."
+  },
+  
+  "should_call_test_agent_after_fix": "true",
+  "should_main_agent_test_itself": "false"
+}

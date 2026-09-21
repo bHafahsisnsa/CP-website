@@ -1,0 +1,69 @@
+{
+  "summary": "Epic E11 Store Locations + Google Reviews feature testing completed. All backend APIs and frontend flows working correctly. Google Maps in EMBED mode (iframe, no API key) and reviews are MANUAL curated as expected.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/stores returns 3 locations with config (maps_mode=embed, reviews_source=manual, rating 4.5/3751)",
+    "Backend: GET /api/store-reviews returns 6 manual curated reviews",
+    "Backend: Admin login successful",
+    "Backend: GET /api/admin/store-locations lists 3 locations",
+    "Backend: POST /api/admin/store-locations creates new location",
+    "Backend: PUT /api/admin/store-locations/{id} updates location",
+    "Backend: DELETE /api/admin/store-locations/{id} deletes location",
+    "Backend: GET /api/admin/store-reviews lists 6 reviews",
+    "Backend: POST /api/admin/store-reviews creates new review",
+    "Backend: PUT /api/admin/store-reviews/{id} updates review",
+    "Backend: DELETE /api/admin/store-reviews/{id} deletes review",
+    "Backend: GET /api/admin/store-config retrieves config",
+    "Backend: PUT /api/admin/store-config updates config (rating_avg, rating_count, intro)",
+    "Backend: RBAC - GET /api/admin/store-locations without token returns 401",
+    "Backend: Validation - POST /api/admin/store-locations without name returns 422",
+    "Frontend: /lokasi page loads with hero 'Kunjungi butik kami'",
+    "Frontend: /lokasi page displays Google rating badge (4.5 · 3.751 ulasan)",
+    "Frontend: /lokasi page shows 3 store location cards",
+    "Frontend: Each location card has embedded Google Map iframe with valid src",
+    "Frontend: Each location has 'Petunjuk Arah' button (data-testid='store-directions-button')",
+    "Frontend: /lokasi page displays reviews section with 6 review cards",
+    "Frontend: Header navigation has 'Lokasi' link to /lokasi",
+    "Frontend: Footer has 'Lokasi Toko' link to /lokasi",
+    "Frontend: /kontak page loads with contact form",
+    "Frontend: /kontak page displays primary store map (data-testid='contact-store-map')",
+    "Frontend: /kontak page shows store locations section with 3 branch cards",
+    "Frontend: Admin login at /admin works with admin@collectorparfum.id / Admin#2026",
+    "Frontend: /admin/lokasi page loads with header (data-testid='admin-stores-header')",
+    "Frontend: Admin stores page has 3 tabs: Lokasi, Ulasan, Konfigurasi",
+    "Frontend: Lokasi tab displays table with locations (data-testid='admin-store-locations-table')",
+    "Frontend: 'Tambah Lokasi' button (data-testid='admin-store-location-add') opens dialog",
+    "Frontend: Location creation dialog allows adding new location with name and address",
+    "Frontend: Location save button (data-testid='admin-store-location-save') works",
+    "Frontend: Edit and delete buttons present for each location",
+    "Frontend: Ulasan tab displays table with reviews (data-testid='admin-store-reviews-table')",
+    "Frontend: 'Tambah Ulasan' button (data-testid='admin-store-review-add') present",
+    "Frontend: Konfigurasi tab displays config form (data-testid='admin-store-config')",
+    "Frontend: Config form has maps mode selector (data-testid='admin-store-maps-mode') showing 'Embed (tanpa API key)'",
+    "Frontend: Config form has reviews source selector (data-testid='admin-store-reviews-source') showing 'Manual (kurasi)'",
+    "Frontend: Config form has rating avg/count inputs (4.5 / 3751)",
+    "Frontend: Config form has intro textarea",
+    "Frontend: 'Simpan Konfigurasi' button (data-testid='admin-store-config-save') present"
+  ],
+  "test_report_links": [
+    "/app/backend/test_stores_e11.py"
+  ],
+  "success_percentage": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all flows working)"
+  },
+  "updated_files": [
+    "/app/backend/test_stores_e11.py"
+  ],
+  "action_item_for_main_agent": "",
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "false"
+}

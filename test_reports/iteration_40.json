@@ -1,0 +1,62 @@
+{
+  "summary": "ITERATION 40 - FINAL TESTING BEFORE RELEASE: All 4 critical tests PASSED. BUG-AUTH-01 customer side verified (session offline handling works correctly, token preserved during transient errors). 'Inspired by' label displays correctly for non-house brands and can be toggled via admin settings. End-to-end shopping flow completed successfully (login -> shop -> filters -> PDP -> cart -> checkout -> order creation -> order history). Cleanup script executed, catalog restored to 12 active products, settings verified.",
+
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "TEST A: BUG-AUTH-01 Customer Side - Session offline handling (100% PASS)",
+    "  - Customer login successful with correct testids (login-email-input, login-password-input, login-submit-button)",
+    "  - Token preserved in localStorage during 502 error",
+    "  - Session offline panel displayed with correct messages ('Koneksi terganggu', 'masih tersimpan')",
+    "  - Auth panel (login form) correctly hidden during offline state",
+    "  - Session recovery successful without manual login after retry",
+    "  - Logout regression test passed (token removed, login form appears)",
+    "TEST B: 'Inspired by <brand>' Label (100% PASS)",
+    "  - Non-house brand (Dior) displays 'INSPIRED BY DIOR' on PDP",
+    "  - House brand (Collector) displays without 'Inspired by' prefix",
+    "  - Admin settings toggle OFF removes prefix (shows only 'DIOR')",
+    "  - Admin settings toggle ON restores prefix ('INSPIRED BY DIOR')",
+    "  - house_brands setting remains 'Collector Parfum, Collector'",
+    "TEST C: End-to-End Shopping Flow (100% PASS)",
+    "  - Customer login successful",
+    "  - Shop page loaded with 8 products initially",
+    "  - Category filter applied (reduced to 2 products)",
+    "  - PDP opened (Green Basil Lime)",
+    "  - Product added to cart successfully",
+    "  - Cart page displayed 1 item with correct subtotal",
+    "  - Checkout page loaded with address, 5 shipping options, 3 payment options",
+    "  - Order placed successfully (CP00000015)",
+    "  - Order success page displayed with 'Menunggu Pembayaran' status",
+    "  - Order found in account order history",
+    "TEST D: Cleanup (100% PASS)",
+    "  - qa_cleanup.py executed successfully",
+    "  - 1 QA product (qa-inspired-dior) removed",
+    "  - Catalog restored to 12 products, all Active",
+    "  - Settings verified: inspired_by_enabled=true, inspired_by_label='Inspired by', house_brands=['Collector Parfum', 'Collector']"
+  ],
+
+  "test_report_links": [
+    "/app/test_reports/iteration_40.json"
+  ],
+
+  "success_percentage": {
+    "backend": "N/A (not tested this iteration - already 70/70 PASS in iteration 36)",
+    "frontend": "100% (4/4 test scenarios passed)"
+  },
+
+  "updated_files": [],
+
+  "action_item_for_main_agent": "",
+
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}

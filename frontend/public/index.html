@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#141414" />
+    <meta name="description" content="Collector Parfum — Koleksi parfum original dengan notes jelas. Pengalaman belanja premium ala editorial, checkout ala marketplace." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      /* Bauhaus 93 — wordmark logo "Collector Parfum" (self-hosted di /public/fonts). */
+      @font-face {
+        font-family: 'Bauhaus 93';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: local('Bauhaus 93'), url('%PUBLIC_URL%/fonts/bauhaus93.woff') format('woff');
+      }
+
+      /* ---------- BOOT SPLASH (preloader sinematik, sekali per sesi) ----------
+         Sengaja di index.html: tampil INSTAN sebelum bundle JS ter-parse, dan
+         logika sembunyi berjalan sebagai vanilla JS (kebal StrictMode / cache bundle).
+         React hanya memberi sinyal window.__CP_APP_READY = true saat prefetch selesai. */
+      #cp-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(120% 90% at 50% 0%, rgba(184, 155, 106, 0.16), transparent 60%),
+          linear-gradient(180deg, #17140f 0%, #100e0a 100%);
+        opacity: 1;
+        transition: opacity 600ms ease, visibility 600ms ease;
+      }
+      #cp-splash.is-leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+      #cp-splash .cp-splashb__inner {
+        display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px;
+        animation: cpb-rise 700ms cubic-bezier(.22, 1, .36, 1) both;
+      }
+      #cp-splash .cp-splashb__mark { display: flex; align-items: baseline; gap: 10px; }
+      #cp-splash .cp-splashb__brand {
+        font-family: 'Bauhaus 93', 'Poppins', 'Futura', 'Century Gothic', ui-rounded, sans-serif;
+        color: #f5efe2; font-size: clamp(34px, 7vw, 60px); line-height: 1; letter-spacing: 0.01em;
+      }
+      #cp-splash .cp-splashb__brand--accent {
+        color: transparent;
+        background: linear-gradient(180deg, #e4d3ab, #b89b6a 58%, #9a7a34);
+        -webkit-background-clip: text; background-clip: text;
+      }
+      #cp-splash .cp-splashb__tag {
+        font-family: 'Azeret Mono', ui-monospace, monospace;
+        color: rgba(214, 195, 163, 0.72); font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase;
+      }
+      #cp-splash .cp-splashb__bar {
+        margin-top: 6px; width: min(240px, 62vw); height: 2px; border-radius: 999px;
+        background: rgba(214, 195, 163, 0.16); overflow: hidden;
+      }
+      #cp-splash .cp-splashb__bar > span {
+        display: block; height: 100%; width: 8%; border-radius: inherit;
+        background: linear-gradient(90deg, #b89b6a, #e4d3ab); transition: width 200ms ease;
+      }
+      @keyframes cpb-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { #cp-splash .cp-splashb__inner { animation: none; } }
+    </style>
+    <title>Collector Parfum — Koleksi Parfum yang Membekas</title>
+  </head>
+  <body>
+    <noscript>Anda perlu mengaktifkan JavaScript untuk membuka situs ini.</noscript>
+
+    <!-- Boot splash (dilepas oleh script di bawah setelah app siap / failsafe). -->
+    <div id="cp-splash" role="status" aria-live="polite" aria-label="Memuat Collector Parfum">
+      <div class="cp-splashb__inner">
+        <div class="cp-splashb__mark">
+          <span class="cp-splashb__brand">Collector</span>
+          <span class="cp-splashb__brand cp-splashb__brand--accent">Parfum</span>
+        </div>
+        <div class="cp-splashb__tag">Aroma yang membekas</div>
+        <div class="cp-splashb__bar"><span></span></div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+
+    <script>
+      (function () {
+        var el = document.getElementById('cp-splash');
+        if (!el) return;
+        var KEY = 'cp_splash_shown';
+        var MIN = 1400, MAX = 5000, FADE = 600;
+        var isAdmin = location.pathname.indexOf('/admin') === 0;
+        var already = false;
+        try { already = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+        // Lewati (langsung hapus) untuk admin atau bila sudah tampil di sesi ini.
+        if (isAdmin || already) {
+          if (el.parentNode) el.parentNode.removeChild(el);
+          return;
+        }
+        var bar = el.querySelector('.cp-splashb__bar > span');
+        var start = Date.now();
+        function appReady() { return window.__CP_APP_READY === true; }
+        function finish() {
+          try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+          if (bar) bar.style.width = '100%';
+          el.classList.add('is-leaving');
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, FADE + 80);
+        }
+        var iv = setInterval(function () {
+          var elapsed = Date.now() - start;
+          var ready = appReady();
+          var pct = ready ? 100 : Math.min(90, Math.round((elapsed / MIN) * 90));
+          if (bar) bar.style.width = pct + '%';
+          if ((ready && elapsed >= MIN) || elapsed >= MAX) {
+            clearInterval(iv);
+            finish();
+          }
+        }, 70);
+      })();
+    </script>
+  </body>
+</html>

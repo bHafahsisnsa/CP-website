@@ -1,0 +1,1249 @@
+"""backend_test.py — Epic E1 Catalog backend testing for Collector Parfum.
+
+Tests catalog endpoints (products, categories, reviews) with filtering, sorting, pagination,
+and adversarial cases.
+"""
+import requests
+import sys
+from datetime import datetime
+
+BASE_URL = "https://sweet-spence-4.preview.emergentagent.com/api"
+
+class FoundationTester:
+    def __init__(self):
+        self.tests_run = 0
+        self.tests_passed = 0
+        self.tests_failed = 0
+        self.failures = []
+        self.token = None
+
+    def log_pass(self, name):
+        self.tests_passed += 1
+        print(f"✅ PASS: {name}")
+
+    def log_fail(self, name, reason):
+        self.tests_failed += 1
+        self.failures.append({"test": name, "reason": reason})
+        print(f"❌ FAIL: {name}")
+        print(f"   Reason: {reason}")
+
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{BASE_URL}{endpoint}"
+        if headers is None:
+            headers = {'Content-Type': 'application/json'}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing: {name}")
+        
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers, timeout=10)
+            elif method == 'POST':
+                response = requests.post(url, json=data, headers=headers, timeout=10)
+            else:
+                self.log_fail(name, f"Unsupported method: {method}")
+                return False, None
+
+            print(f"   Status: {response.status_code} (expected: {expected_status})")
+            
+            if response.status_code != expected_status:
+                try:
+                    body = response.json()
+                    self.log_fail(name, f"Expected {expected_status}, got {response.status_code}. Response: {body}")
+                except:
+                    self.log_fail(name, f"Expected {expected_status}, got {response.status_code}. Response: {response.text[:200]}")
+                return False, None
+
+            try:
+                json_response = response.json()
+                self.log_pass(name)
+                return True, json_response
+            except:
+                if expected_status == 204:
+                    self.log_pass(name)
+                    return True, None
+                self.log_fail(name, "Response is not valid JSON")
+                return False, None
+
+        except requests.exceptions.Timeout:
+            self.log_fail(name, "Request timeout")
+            return False, None
+        except requests.exceptions.ConnectionError:
+            self.log_fail(name, "Connection error")
+            return False, None
+        except Exception as e:
+            self.log_fail(name, f"Exception: {str(e)}")
+            return False, None
+
+    def test_health_endpoints(self):
+        """Test health endpoints"""
+        print("\n" + "="*60)
+        print("TESTING HEALTH ENDPOINTS")
+        print("="*60)
+
+        # Test GET /api/
+        success, response = self.run_test(
+            "GET /api/ returns 200 with service info",
+            "GET",
+            "/",
+            200
+        )
+        if success and response:
+            if not all(k in response for k in ["service", "status", "message"]):
+                self.log_fail("GET /api/ response structure", f"Missing required fields. Got: {response}")
+            else:
+                print(f"   Response: {response}")
+
+        # Test GET /api/health
+        success, response = self.run_test(
+            "GET /api/health returns 200 with health info",
+            "GET",
+            "/health",
+            200
+        )
+        if success and response:
+            if not all(k in response for k in ["status", "db", "time"]):
+                self.log_fail("GET /api/health response structure", f"Missing required fields. Got: {response}")
+            else:
+                print(f"   Response: {response}")
+                if not response.get("db"):
+                    print("   ⚠️  WARNING: Database connection is not healthy")
+
+    def test_register_success(self):
+        """Test successful registration"""
+        print("\n" + "="*60)
+        print("TESTING REGISTRATION - SUCCESS CASES")
+        print("="*60)
+
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        test_email = f"test{timestamp}@example.com"
+        
+        success, response = self.run_test(
+            "POST /api/auth/register with valid data returns 200",
+            "POST",
+            "/auth/register",
+            200,
+            data={
+                "name": "Test User",
+                "email": test_email,
+                "password": "Test123!",
+                "phone": "081234567890"
+            }
+        )
+        
+        if success and response:
+            # Check response structure
+            if "token" not in response or "user" not in response:
+                self.log_fail("Register response structure", f"Missing token or user. Got: {response}")
+            else:
+                print(f"   Token: {response['token'][:20]}...")
+                
+                # Check token format
+                if not response["token"].startswith("sess_"):
+                    self.log_fail("Register token format", f"Token should start with 'sess_', got: {response['token'][:10]}")
+                
+                # Check user object
+                user = response["user"]
+                print(f"   User: {user}")
+                
+                if user.get("role") != "customer":
+                    self.log_fail("Register user role", f"Expected role='customer', got: {user.get('role')}")
+                
+                if "password_hash" in user:
+                    self.log_fail("Register security", "Response contains password_hash (security leak!)")
+                
+                if user.get("email") != test_email:
+                    self.log_fail("Register user email", f"Expected email={test_email}, got: {user.get('email')}")
+                
+                # Store token for later tests
+                self.token = response["token"]
+
+    def test_register_duplicate(self):
+        """Test registration with duplicate email"""
+        print("\n" + "="*60)
+        print("TESTING REGISTRATION - DUPLICATE EMAIL")
+        print("="*60)
+
+        # Try to register with admin email (already seeded)
+        success, response = self.run_test(
+            "POST /api/auth/register with duplicate email returns 409",
+            "POST",
+            "/auth/register",
+            409,
+            data={
+                "name": "Duplicate User",
+                "email": "admin@collectorparfum.id",
+                "password": "Test123!"
+            }
+        )
+
+    def test_register_validation(self):
+        """Test registration validation"""
+        print("\n" + "="*60)
+        print("TESTING REGISTRATION - VALIDATION")
+        print("="*60)
+
+        # Test missing password
+        success, response = self.run_test(
+            "POST /api/auth/register without password returns 422",
+            "POST",
+            "/auth/register",
+            422,
+            data={
+                "name": "Test User",
+                "email": "test@example.com"
+            }
+        )
+
+        # Test short password
+        success, response = self.run_test(
+            "POST /api/auth/register with password < 6 chars returns 422",
+            "POST",
+            "/auth/register",
+            422,
+            data={
+                "name": "Test User",
+                "email": "test2@example.com",
+                "password": "12345"
+            }
+        )
+
+        # Test invalid email
+        success, response = self.run_test(
+            "POST /api/auth/register with invalid email returns 422",
+            "POST",
+            "/auth/register",
+            422,
+            data={
+                "name": "Test User",
+                "email": "not-an-email",
+                "password": "Test123!"
+            }
+        )
+
+    def test_login_success(self):
+        """Test successful login"""
+        print("\n" + "="*60)
+        print("TESTING LOGIN - SUCCESS CASES")
+        print("="*60)
+
+        # Test admin login
+        success, response = self.run_test(
+            "POST /api/auth/login with admin credentials returns 200",
+            "POST",
+            "/auth/login",
+            200,
+            data={
+                "email": "admin@collectorparfum.id",
+                "password": "Admin#2026"
+            }
+        )
+        
+        if success and response:
+            if "token" not in response or "user" not in response:
+                self.log_fail("Login response structure", f"Missing token or user. Got: {response}")
+            else:
+                print(f"   Token: {response['token'][:20]}...")
+                
+                user = response["user"]
+                print(f"   User: {user}")
+                
+                if user.get("role") != "admin":
+                    self.log_fail("Login admin role", f"Expected role='admin', got: {user.get('role')}")
+                
+                if "password_hash" in user:
+                    self.log_fail("Login security", "Response contains password_hash (security leak!)")
+                
+                # Store admin token for /me test
+                self.admin_token = response["token"]
+
+        # Test customer login
+        success, response = self.run_test(
+            "POST /api/auth/login with customer credentials returns 200",
+            "POST",
+            "/auth/login",
+            200,
+            data={
+                "email": "customer@collectorparfum.id",
+                "password": "Customer#2026"
+            }
+        )
+
+    def test_login_failures(self):
+        """Test login failure cases"""
+        print("\n" + "="*60)
+        print("TESTING LOGIN - FAILURE CASES")
+        print("="*60)
+
+        # Test wrong password
+        success, response = self.run_test(
+            "POST /api/auth/login with wrong password returns 401",
+            "POST",
+            "/auth/login",
+            401,
+            data={
+                "email": "admin@collectorparfum.id",
+                "password": "WrongPassword123"
+            }
+        )
+
+        # Test non-existent email
+        success, response = self.run_test(
+            "POST /api/auth/login with non-existent email returns 401",
+            "POST",
+            "/auth/login",
+            401,
+            data={
+                "email": "nonexistent@example.com",
+                "password": "SomePassword123"
+            }
+        )
+
+    def test_auth_me(self):
+        """Test /auth/me endpoint"""
+        print("\n" + "="*60)
+        print("TESTING /auth/me ENDPOINT")
+        print("="*60)
+
+        # Test with valid token
+        if hasattr(self, 'admin_token'):
+            success, response = self.run_test(
+                "GET /api/auth/me with valid token returns 200",
+                "GET",
+                "/auth/me",
+                200,
+                headers={
+                    "Authorization": f"Bearer {self.admin_token}"
+                }
+            )
+            
+            if success and response:
+                print(f"   User: {response}")
+                if "password_hash" in response:
+                    self.log_fail("/auth/me security", "Response contains password_hash (security leak!)")
+        else:
+            self.log_fail("GET /api/auth/me with valid token", "No admin token available from previous tests")
+
+        # Test without Authorization header
+        success, response = self.run_test(
+            "GET /api/auth/me without Authorization returns 401",
+            "GET",
+            "/auth/me",
+            401
+        )
+
+        # Test with invalid token
+        success, response = self.run_test(
+            "GET /api/auth/me with invalid token returns 401",
+            "GET",
+            "/auth/me",
+            401,
+            headers={
+                "Authorization": "Bearer sess_invalid_garbage_token_12345"
+            }
+        )
+
+    def test_products_list(self):
+        """Test GET /api/products basic functionality"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCTS LIST - BASIC")
+        print("="*60)
+
+        success, response = self.run_test(
+            "GET /api/products returns 200 with array",
+            "GET",
+            "/products",
+            200
+        )
+        
+        if success and response:
+            if not isinstance(response, list):
+                self.log_fail("Products list type", f"Expected array, got: {type(response)}")
+            else:
+                print(f"   Returned {len(response)} products")
+                
+                # Check for 12 active products
+                if len(response) < 12:
+                    self.log_fail("Products count", f"Expected at least 12 products, got {len(response)}")
+                
+                # Check first product structure
+                if len(response) > 0:
+                    p = response[0]
+                    required_fields = ['id', 'slug', 'name', 'category', 'price', 'volumes', 
+                                     'notes', 'rating_avg', 'rating_count', 'images', 'status']
+                    missing = [f for f in required_fields if f not in p]
+                    if missing:
+                        self.log_fail("Product structure", f"Missing fields: {missing}")
+                    else:
+                        print(f"   Sample product: {p.get('name')} (id: {p.get('id')})")
+                        
+                        # Check id prefix
+                        if not p.get('id', '').startswith('prd_'):
+                            self.log_fail("Product ID prefix", f"Expected 'prd_' prefix, got: {p.get('id')}")
+                        
+                        # Check status is active
+                        if p.get('status') != 'active':
+                            self.log_fail("Product status", f"Expected 'active', got: {p.get('status')}")
+                        
+                        # Check volumes array
+                        if not isinstance(p.get('volumes'), list) or len(p.get('volumes', [])) == 0:
+                            self.log_fail("Product volumes", f"Expected non-empty array, got: {p.get('volumes')}")
+
+    def test_products_header(self):
+        """Test X-Total-Count header"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCTS - X-TOTAL-COUNT HEADER")
+        print("="*60)
+
+        try:
+            url = f"{BASE_URL}/products"
+            response = requests.get(url, timeout=10)
+            
+            self.tests_run += 1
+            print(f"\n🔍 Testing: X-Total-Count header presence")
+            
+            if response.status_code == 200:
+                header = response.headers.get('X-Total-Count') or response.headers.get('x-total-count')
+                if header:
+                    print(f"   X-Total-Count: {header}")
+                    self.log_pass("X-Total-Count header present")
+                else:
+                    self.log_fail("X-Total-Count header", "Header not found in response")
+            else:
+                self.log_fail("X-Total-Count header test", f"Got status {response.status_code}")
+        except Exception as e:
+            self.log_fail("X-Total-Count header test", str(e))
+
+    def test_products_filtering(self):
+        """Test product filtering"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCTS - FILTERING")
+        print("="*60)
+
+        # Test category filter
+        success, response = self.run_test(
+            "GET /api/products?category=woody returns filtered results",
+            "GET",
+            "/products?category=woody",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Filtered by category=woody: {len(response)} products")
+
+        # Test gender filter
+        success, response = self.run_test(
+            "GET /api/products?gender=Pria returns filtered results",
+            "GET",
+            "/products?gender=Pria",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Filtered by gender=Pria: {len(response)} products")
+
+        # Test CSV multi-value filter
+        success, response = self.run_test(
+            "GET /api/products?gender=Pria,Wanita returns filtered results",
+            "GET",
+            "/products?gender=Pria,Wanita",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Filtered by gender=Pria,Wanita: {len(response)} products")
+
+        # Test concentration filter
+        success, response = self.run_test(
+            "GET /api/products?concentration=EDP returns filtered results",
+            "GET",
+            "/products?concentration=EDP",
+            200
+        )
+
+        # Test price range
+        success, response = self.run_test(
+            "GET /api/products?min_price=500000&max_price=1000000 returns filtered results",
+            "GET",
+            "/products?min_price=500000&max_price=1000000",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Filtered by price range: {len(response)} products")
+
+        # Test best_seller filter
+        success, response = self.run_test(
+            "GET /api/products?best_seller=1 returns best sellers",
+            "GET",
+            "/products?best_seller=1",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Best sellers: {len(response)} products")
+
+        # Test is_new filter
+        success, response = self.run_test(
+            "GET /api/products?is_new=1 returns new products",
+            "GET",
+            "/products?is_new=1",
+            200
+        )
+
+        # Test search query
+        success, response = self.run_test(
+            "GET /api/products?q=noir returns search results",
+            "GET",
+            "/products?q=noir",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Search q=noir: {len(response)} products")
+
+    def test_products_sorting(self):
+        """Test product sorting"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCTS - SORTING")
+        print("="*60)
+
+        sorts = ['featured', 'newest', 'best', 'low', 'high']
+        for sort_val in sorts:
+            success, response = self.run_test(
+                f"GET /api/products?sort={sort_val} returns sorted results",
+                "GET",
+                f"/products?sort={sort_val}",
+                200
+            )
+            if success and response and isinstance(response, list) and len(response) >= 2:
+                if sort_val == 'low':
+                    # Check ascending price
+                    if response[0].get('price', 0) > response[1].get('price', 0):
+                        self.log_fail(f"Sort {sort_val}", "Prices not in ascending order")
+                elif sort_val == 'high':
+                    # Check descending price
+                    if response[0].get('price', 0) < response[1].get('price', 0):
+                        self.log_fail(f"Sort {sort_val}", "Prices not in descending order")
+
+    def test_products_pagination(self):
+        """Test product pagination"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCTS - PAGINATION")
+        print("="*60)
+
+        # Test limit
+        success, response = self.run_test(
+            "GET /api/products?limit=5 returns 5 products",
+            "GET",
+            "/products?limit=5",
+            200
+        )
+        if success and response and isinstance(response, list):
+            if len(response) != 5:
+                self.log_fail("Limit=5", f"Expected 5 products, got {len(response)}")
+            else:
+                print(f"   Limit=5 returned {len(response)} products")
+
+        # Test skip
+        success, response = self.run_test(
+            "GET /api/products?skip=5&limit=5 returns next 5 products",
+            "GET",
+            "/products?skip=5&limit=5",
+            200
+        )
+
+        # Test limit clamp to 100
+        success, response = self.run_test(
+            "GET /api/products?limit=999999 clamps to max",
+            "GET",
+            "/products?limit=999999",
+            200
+        )
+        if success and response and isinstance(response, list):
+            if len(response) > 100:
+                self.log_fail("Limit clamp", f"Expected max 100, got {len(response)}")
+
+    def test_product_detail(self):
+        """Test GET /api/products/{slug}"""
+        print("\n" + "="*60)
+        print("TESTING PRODUCT DETAIL")
+        print("="*60)
+
+        # Test valid slug
+        success, response = self.run_test(
+            "GET /api/products/noir-oud-intense returns 200",
+            "GET",
+            "/products/noir-oud-intense",
+            200
+        )
+        if success and response:
+            if not isinstance(response, dict):
+                self.log_fail("Product detail type", f"Expected object, got: {type(response)}")
+            else:
+                print(f"   Product: {response.get('name')}")
+                if response.get('slug') != 'noir-oud-intense':
+                    self.log_fail("Product slug", f"Expected 'noir-oud-intense', got: {response.get('slug')}")
+
+        # Test invalid slug (404)
+        success, response = self.run_test(
+            "GET /api/products/does-not-exist returns 404",
+            "GET",
+            "/products/does-not-exist",
+            404
+        )
+
+    def test_categories(self):
+        """Test GET /api/categories"""
+        print("\n" + "="*60)
+        print("TESTING CATEGORIES")
+        print("="*60)
+
+        success, response = self.run_test(
+            "GET /api/categories returns 200 with array",
+            "GET",
+            "/categories",
+            200
+        )
+        
+        if success and response:
+            if not isinstance(response, list):
+                self.log_fail("Categories type", f"Expected array, got: {type(response)}")
+            else:
+                print(f"   Returned {len(response)} categories")
+                
+                # Check for 6 active categories
+                if len(response) < 6:
+                    self.log_fail("Categories count", f"Expected at least 6 categories, got {len(response)}")
+                
+                # Check first category structure
+                if len(response) > 0:
+                    c = response[0]
+                    required_fields = ['id', 'slug', 'name', 'active']
+                    missing = [f for f in required_fields if f not in c]
+                    if missing:
+                        self.log_fail("Category structure", f"Missing fields: {missing}")
+                    else:
+                        print(f"   Sample category: {c.get('name')} (id: {c.get('id')})")
+                        
+                        # Check id prefix
+                        if not c.get('id', '').startswith('cat_'):
+                            self.log_fail("Category ID prefix", f"Expected 'cat_' prefix, got: {c.get('id')}")
+
+    def test_reviews(self):
+        """Test GET /api/reviews"""
+        print("\n" + "="*60)
+        print("TESTING REVIEWS")
+        print("="*60)
+
+        # Test all reviews
+        success, response = self.run_test(
+            "GET /api/reviews returns 200 with array",
+            "GET",
+            "/reviews",
+            200
+        )
+        
+        if success and response:
+            if not isinstance(response, list):
+                self.log_fail("Reviews type", f"Expected array, got: {type(response)}")
+            else:
+                print(f"   Returned {len(response)} reviews")
+                
+                # Check first review structure
+                if len(response) > 0:
+                    r = response[0]
+                    required_fields = ['id', 'name', 'rating', 'quote', 'status']
+                    missing = [f for f in required_fields if f not in r]
+                    if missing:
+                        self.log_fail("Review structure", f"Missing fields: {missing}")
+                    else:
+                        print(f"   Sample review: {r.get('name')} - {r.get('rating')} stars")
+                        
+                        # Check id prefix
+                        if not r.get('id', '').startswith('rev_'):
+                            self.log_fail("Review ID prefix", f"Expected 'rev_' prefix, got: {r.get('id')}")
+                        
+                        # Check status is published
+                        if r.get('status') != 'published':
+                            self.log_fail("Review status", f"Expected 'published', got: {r.get('status')}")
+
+        # Test product-specific reviews
+        success, response = self.run_test(
+            "GET /api/reviews?product_id=prd_noiroudintense returns filtered reviews",
+            "GET",
+            "/reviews?product_id=prd_noiroudintense",
+            200
+        )
+        if success and response and isinstance(response, list):
+            print(f"   Product-specific reviews: {len(response)}")
+            if len(response) != 3:
+                print(f"   ⚠️  WARNING: Expected 3 reviews for noir-oud-intense, got {len(response)}")
+
+    def test_adversarial(self):
+        """Test adversarial inputs (must never return 5xx)"""
+        print("\n" + "="*60)
+        print("TESTING ADVERSARIAL INPUTS (MUST NOT 5xx)")
+        print("="*60)
+
+        adversarial_tests = [
+            ("/products?limit=999999&skip=abc", "huge limit + invalid skip"),
+            ("/products?limit=-999", "negative limit"),
+            ("/products?sort=DROP%20TABLE", "SQL injection attempt in sort"),
+            ("/products?q=🔥💯✨", "emoji in search"),
+            ("/products?q=1%20OR%201%3D1", "SQL injection in search"),
+            ("/products?min_price=abc&max_price=-1", "invalid price values"),
+            ("/products/%00", "null byte in slug"),
+            ("/products/../../etc/passwd", "path traversal attempt"),
+            ("/reviews?product_id=<script>alert('xss')</script>", "XSS attempt"),
+        ]
+
+        for endpoint, description in adversarial_tests:
+            try:
+                url = f"{BASE_URL}{endpoint}"
+                response = requests.get(url, timeout=10)
+                
+                self.tests_run += 1
+                print(f"\n🔍 Testing: {description}")
+                print(f"   Endpoint: {endpoint}")
+                print(f"   Status: {response.status_code}")
+                
+                if 500 <= response.status_code < 600:
+                    self.log_fail(f"Adversarial: {description}", f"Returned 5xx status: {response.status_code}")
+                else:
+                    self.log_pass(f"Adversarial: {description} (no 5xx)")
+            except Exception as e:
+                self.log_fail(f"Adversarial: {description}", f"Exception: {str(e)}")
+
+    def test_vouchers_validate(self):
+        """Test POST /api/vouchers/validate with various scenarios"""
+        print("\n" + "="*60)
+        print("TESTING VOUCHER VALIDATION (Epic E2)")
+        print("="*60)
+
+        # Test 1: Valid percent voucher WELCOME10 (10%, no min_spend)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - valid percent voucher WELCOME10",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "WELCOME10", "subtotal": 250000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("WELCOME10 validation", f"Expected valid=true, got {response}")
+            elif response.get("type") != "percent":
+                self.log_fail("WELCOME10 type", f"Expected type='percent', got {response.get('type')}")
+            elif response.get("discount") != 25000:
+                self.log_fail("WELCOME10 discount", f"Expected discount=25000, got {response.get('discount')}")
+            else:
+                print(f"   ✓ Valid percent voucher: discount={response.get('discount')}, code={response.get('code')}")
+
+        # Test 2: Flat voucher COLLECTOR50 below min_spend (min_spend=300000)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - COLLECTOR50 below min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "COLLECTOR50", "subtotal": 250000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("COLLECTOR50 below min_spend", f"Expected valid=false, got {response}")
+            elif not response.get("reason"):
+                self.log_fail("COLLECTOR50 reason", f"Expected reason for invalid voucher, got {response}")
+            else:
+                print(f"   ✓ Below min_spend: valid=false, reason={response.get('reason')}")
+
+        # Test 3: Flat voucher COLLECTOR50 at min_spend (should be valid)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - COLLECTOR50 at min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "COLLECTOR50", "subtotal": 300000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("COLLECTOR50 at min_spend", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 50000:
+                self.log_fail("COLLECTOR50 discount", f"Expected discount=50000, got {response.get('discount')}")
+            else:
+                print(f"   ✓ At min_spend: valid=true, discount={response.get('discount')}")
+
+        # Test 4: Free shipping voucher ONGKIRGRATIS (min_spend=150000)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - free_shipping ONGKIRGRATIS",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "ONGKIRGRATIS", "subtotal": 200000, "shipping": 22000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("ONGKIRGRATIS validation", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 22000:
+                self.log_fail("ONGKIRGRATIS discount", f"Expected discount=22000 (shipping), got {response.get('discount')}")
+            else:
+                print(f"   ✓ Free shipping: valid=true, discount={response.get('discount')}")
+
+        # Test 5: Free shipping below min_spend
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - ONGKIRGRATIS below min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "ONGKIRGRATIS", "subtotal": 100000, "shipping": 22000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("ONGKIRGRATIS below min_spend", f"Expected valid=false, got {response}")
+            else:
+                print(f"   ✓ Below min_spend: valid=false, reason={response.get('reason')}")
+
+        # Test 6: Scoped voucher AMBEROUD15 (category=amber, 15%)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - scoped voucher AMBEROUD15 with amber item",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={
+                "code": "AMBEROUD15",
+                "subtotal": 685000,
+                "items": [
+                    {
+                        "product_id": "x",
+                        "category": "amber",
+                        "unit_price": 685000,
+                        "quantity": 1
+                    }
+                ]
+            }
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("AMBEROUD15 with amber", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 102750:
+                self.log_fail("AMBEROUD15 discount", f"Expected discount=102750 (15% of 685000), got {response.get('discount')}")
+            else:
+                print(f"   ✓ Scoped voucher with matching category: valid=true, discount={response.get('discount')}")
+
+        # Test 7: Scoped voucher with non-amber items
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - AMBEROUD15 with non-amber item",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={
+                "code": "AMBEROUD15",
+                "subtotal": 685000,
+                "items": [
+                    {
+                        "product_id": "y",
+                        "category": "floral",
+                        "unit_price": 685000,
+                        "quantity": 1
+                    }
+                ]
+            }
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("AMBEROUD15 with non-amber", f"Expected valid=false, got {response}")
+            else:
+                print(f"   ✓ Scoped voucher with non-matching category: valid=false, reason={response.get('reason')}")
+
+        # Test 8: Expired voucher EXPIRED2024
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - expired voucher EXPIRED2024",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "EXPIRED2024", "subtotal": 250000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("EXPIRED2024", f"Expected valid=false, got {response}")
+            elif not response.get("reason") or "kedaluwarsa" not in response.get("reason", "").lower():
+                self.log_fail("EXPIRED2024 reason", f"Expected reason containing 'kedaluwarsa', got {response.get('reason')}")
+            else:
+                print(f"   ✓ Expired voucher: valid=false, reason={response.get('reason')}")
+
+        # Test 9: Unknown voucher code
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - unknown code NOTREAL",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "NOTREAL", "subtotal": 1000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("Unknown code", f"Expected valid=false, got {response}")
+            elif not response.get("reason"):
+                self.log_fail("Unknown code reason", f"Expected reason for invalid voucher, got {response}")
+            else:
+                print(f"   ✓ Unknown code: valid=false, reason={response.get('reason')}")
+
+        # Test 10-15: Adversarial payloads (must NOT return 5xx)
+        print("\n   Testing adversarial payloads (must not return 5xx)...")
+        
+        adversarial_tests = [
+            ("Invalid type - code as number", {"code": 12345, "subtotal": "abc"}),
+            ("Empty payload", {}),
+            ("Null code", {"code": None, "subtotal": 1000}),
+            ("SQL injection attempt", {"code": "'; DROP TABLE--", "subtotal": -999}),
+            ("Extremely long code", {"code": "X" * 500, "subtotal": 1000000000000}),
+            ("Negative subtotal", {"code": "WELCOME10", "subtotal": -50000}),
+        ]
+        
+        for test_name, payload in adversarial_tests:
+            try:
+                url = f"{BASE_URL}/vouchers/validate"
+                response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=10)
+                self.tests_run += 1
+                
+                if response.status_code >= 500:
+                    self.log_fail(f"Adversarial: {test_name}", f"Got 5xx error: {response.status_code}")
+                elif response.status_code in [200, 422]:
+                    self.log_pass(f"Adversarial: {test_name}")
+                    print(f"   ✓ {test_name}: status={response.status_code} (no 5xx)")
+                else:
+                    self.log_pass(f"Adversarial: {test_name}")
+                    print(f"   ✓ {test_name}: status={response.status_code} (acceptable)")
+            except Exception as e:
+                self.log_fail(f"Adversarial: {test_name}", f"Exception: {str(e)}")
+
+    def test_vouchers_list(self):
+        """Test GET /api/vouchers"""
+        print("\n" + "="*60)
+        print("TESTING VOUCHER LIST (Epic E2)")
+        print("="*60)
+
+        success, response = self.run_test(
+            "GET /api/vouchers returns active vouchers",
+            "GET",
+            "/vouchers",
+            200
+        )
+        
+        if success and response:
+            if not isinstance(response, list):
+                self.log_fail("Vouchers list type", f"Expected array, got {type(response)}")
+            else:
+                print(f"   ✓ Returned {len(response)} vouchers")
+                
+                # Check that EXPIRED2024 is NOT in the list
+                expired_found = any(v.get("code") == "EXPIRED2024" for v in response)
+                if expired_found:
+                    self.log_fail("Expired voucher in list", "EXPIRED2024 should not be in active vouchers list")
+                else:
+                    print(f"   ✓ EXPIRED2024 not in list (correct)")
+                
+                # Check that WELCOME10 IS in the list
+                welcome_found = any(v.get("code") == "WELCOME10" for v in response)
+                if not welcome_found:
+                    self.log_fail("WELCOME10 missing", "WELCOME10 should be in active vouchers list")
+                else:
+                    print(f"   ✓ WELCOME10 found in list (correct)")
+                
+                # Verify structure of first voucher
+                if len(response) > 0:
+                    v = response[0]
+                    required_fields = ["id", "code", "type", "value", "label"]
+                    missing = [f for f in required_fields if f not in v]
+                    if missing:
+                        self.log_fail("Voucher structure", f"Missing fields: {missing}")
+                    else:
+                        print(f"   ✓ Voucher structure valid")
+
+    def print_summary(self):
+        """Print test summary"""
+        print("\n" + "="*60)
+        print("TEST SUMMARY")
+        print("="*60)
+        print(f"Total tests run: {self.tests_run}")
+        print(f"Passed: {self.tests_passed}")
+        print(f"Failed: {self.tests_failed}")
+        print(f"Success rate: {(self.tests_passed/self.tests_run*100):.1f}%")
+        
+        if self.failures:
+            print("\n" + "="*60)
+            print("FAILED TESTS DETAILS")
+            print("="*60)
+            for failure in self.failures:
+                print(f"\n❌ {failure['test']}")
+                print(f"   {failure['reason']}")
+        
+        return 0 if self.tests_failed == 0 else 1
+
+
+def main():
+    print("="*60)
+    print("COLLECTOR PARFUM - EPIC E1 + E2 BACKEND TESTS")
+    print("="*60)
+    print(f"Base URL: {BASE_URL}")
+    
+    tester = FoundationTester()
+        """Test POST /api/vouchers/validate with various scenarios"""
+        print("\n" + "="*60)
+        print("TESTING VOUCHER VALIDATION (Epic E2)")
+        print("="*60)
+
+        # Test 1: Valid percent voucher WELCOME10 (10%, no min_spend)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - valid percent voucher WELCOME10",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "WELCOME10", "subtotal": 250000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("WELCOME10 validation", f"Expected valid=true, got {response}")
+            elif response.get("type") != "percent":
+                self.log_fail("WELCOME10 type", f"Expected type='percent', got {response.get('type')}")
+            elif response.get("discount") != 25000:
+                self.log_fail("WELCOME10 discount", f"Expected discount=25000, got {response.get('discount')}")
+            else:
+                print(f"   ✓ Valid percent voucher: discount={response.get('discount')}, code={response.get('code')}")
+
+        # Test 2: Flat voucher COLLECTOR50 below min_spend (min_spend=300000)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - COLLECTOR50 below min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "COLLECTOR50", "subtotal": 250000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("COLLECTOR50 below min_spend", f"Expected valid=false, got {response}")
+            elif not response.get("reason"):
+                self.log_fail("COLLECTOR50 reason", f"Expected reason for invalid voucher, got {response}")
+            else:
+                print(f"   ✓ Below min_spend: valid=false, reason={response.get('reason')}")
+
+        # Test 3: Flat voucher COLLECTOR50 at min_spend (should be valid)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - COLLECTOR50 at min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "COLLECTOR50", "subtotal": 300000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("COLLECTOR50 at min_spend", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 50000:
+                self.log_fail("COLLECTOR50 discount", f"Expected discount=50000, got {response.get('discount')}")
+            else:
+                print(f"   ✓ At min_spend: valid=true, discount={response.get('discount')}")
+
+        # Test 4: Free shipping voucher ONGKIRGRATIS (min_spend=150000)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - free_shipping ONGKIRGRATIS",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "ONGKIRGRATIS", "subtotal": 200000, "shipping": 22000}
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("ONGKIRGRATIS validation", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 22000:
+                self.log_fail("ONGKIRGRATIS discount", f"Expected discount=22000 (shipping), got {response.get('discount')}")
+            else:
+                print(f"   ✓ Free shipping: valid=true, discount={response.get('discount')}")
+
+        # Test 5: Free shipping below min_spend
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - ONGKIRGRATIS below min_spend",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "ONGKIRGRATIS", "subtotal": 100000, "shipping": 22000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("ONGKIRGRATIS below min_spend", f"Expected valid=false, got {response}")
+            else:
+                print(f"   ✓ Below min_spend: valid=false, reason={response.get('reason')}")
+
+        # Test 6: Scoped voucher AMBEROUD15 (category=amber, 15%)
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - scoped voucher AMBEROUD15 with amber item",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={
+                "code": "AMBEROUD15",
+                "subtotal": 685000,
+                "items": [
+                    {
+                        "product_id": "x",
+                        "category": "amber",
+                        "unit_price": 685000,
+                        "quantity": 1
+                    }
+                ]
+            }
+        )
+        if success and response:
+            if not response.get("valid"):
+                self.log_fail("AMBEROUD15 with amber", f"Expected valid=true, got {response}")
+            elif response.get("discount") != 102750:
+                self.log_fail("AMBEROUD15 discount", f"Expected discount=102750 (15% of 685000), got {response.get('discount')}")
+            else:
+                print(f"   ✓ Scoped voucher with matching category: valid=true, discount={response.get('discount')}")
+
+        # Test 7: Scoped voucher with non-amber items
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - AMBEROUD15 with non-amber item",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={
+                "code": "AMBEROUD15",
+                "subtotal": 685000,
+                "items": [
+                    {
+                        "product_id": "y",
+                        "category": "floral",
+                        "unit_price": 685000,
+                        "quantity": 1
+                    }
+                ]
+            }
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("AMBEROUD15 with non-amber", f"Expected valid=false, got {response}")
+            else:
+                print(f"   ✓ Scoped voucher with non-matching category: valid=false, reason={response.get('reason')}")
+
+        # Test 8: Expired voucher EXPIRED2024
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - expired voucher EXPIRED2024",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "EXPIRED2024", "subtotal": 250000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("EXPIRED2024", f"Expected valid=false, got {response}")
+            elif not response.get("reason") or "kedaluwarsa" not in response.get("reason", "").lower():
+                self.log_fail("EXPIRED2024 reason", f"Expected reason containing 'kedaluwarsa', got {response.get('reason')}")
+            else:
+                print(f"   ✓ Expired voucher: valid=false, reason={response.get('reason')}")
+
+        # Test 9: Unknown voucher code
+        success, response = self.run_test(
+            "POST /api/vouchers/validate - unknown code NOTREAL",
+            "POST",
+            "/vouchers/validate",
+            200,
+            data={"code": "NOTREAL", "subtotal": 1000}
+        )
+        if success and response:
+            if response.get("valid"):
+                self.log_fail("Unknown code", f"Expected valid=false, got {response}")
+            elif not response.get("reason"):
+                self.log_fail("Unknown code reason", f"Expected reason for invalid voucher, got {response}")
+            else:
+                print(f"   ✓ Unknown code: valid=false, reason={response.get('reason')}")
+
+        # Test 10-15: Adversarial payloads (must NOT return 5xx)
+        print("\n   Testing adversarial payloads (must not return 5xx)...")
+        
+        adversarial_tests = [
+            ("Invalid type - code as number", {"code": 12345, "subtotal": "abc"}),
+            ("Empty payload", {}),
+            ("Null code", {"code": None, "subtotal": 1000}),
+            ("SQL injection attempt", {"code": "'; DROP TABLE--", "subtotal": -999}),
+            ("Extremely long code", {"code": "X" * 500, "subtotal": 1000000000000}),
+            ("Negative subtotal", {"code": "WELCOME10", "subtotal": -50000}),
+        ]
+        
+        for test_name, payload in adversarial_tests:
+            try:
+                url = f"{BASE_URL}/vouchers/validate"
+                response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=10)
+                self.tests_run += 1
+                
+                if response.status_code >= 500:
+                    self.log_fail(f"Adversarial: {test_name}", f"Got 5xx error: {response.status_code}")
+                elif response.status_code in [200, 422]:
+                    self.log_pass(f"Adversarial: {test_name}")
+                    print(f"   ✓ {test_name}: status={response.status_code} (no 5xx)")
+                else:
+                    self.log_pass(f"Adversarial: {test_name}")
+                    print(f"   ✓ {test_name}: status={response.status_code} (acceptable)")
+            except Exception as e:
+                self.log_fail(f"Adversarial: {test_name}", f"Exception: {str(e)}")
+
+    def test_vouchers_list(self):
+        """Test GET /api/vouchers"""
+        print("\n" + "="*60)
+        print("TESTING VOUCHER LIST (Epic E2)")
+        print("="*60)
+
+        success, response = self.run_test(
+            "GET /api/vouchers returns active vouchers",
+            "GET",
+            "/vouchers",
+            200
+        )
+        
+        if success and response:
+            if not isinstance(response, list):
+                self.log_fail("Vouchers list type", f"Expected array, got {type(response)}")
+            else:
+                print(f"   ✓ Returned {len(response)} vouchers")
+                
+                # Check that EXPIRED2024 is NOT in the list
+                expired_found = any(v.get("code") == "EXPIRED2024" for v in response)
+                if expired_found:
+                    self.log_fail("Expired voucher in list", "EXPIRED2024 should not be in active vouchers list")
+                else:
+                    print(f"   ✓ EXPIRED2024 not in list (correct)")
+                
+                # Check that WELCOME10 IS in the list
+                welcome_found = any(v.get("code") == "WELCOME10" for v in response)
+                if not welcome_found:
+                    self.log_fail("WELCOME10 missing", "WELCOME10 should be in active vouchers list")
+                else:
+                    print(f"   ✓ WELCOME10 found in list (correct)")
+                
+                # Verify structure of first voucher
+                if len(response) > 0:
+                    v = response[0]
+                    required_fields = ["id", "code", "type", "value", "label"]
+                    missing = [f for f in required_fields if f not in v]
+                    if missing:
+                        self.log_fail("Voucher structure", f"Missing fields: {missing}")
+                    else:
+                        print(f"   ✓ Voucher structure valid")
+
+    print(f"Started at: {datetime.now().isoformat()}")
+    
+    tester = FoundationTester()
+    
+    # Run all test suites
+    tester.test_health_endpoints()
+    tester.test_products_list()
+    tester.test_products_header()
+    tester.test_products_filtering()
+    tester.test_products_sorting()
+    tester.test_products_pagination()
+    tester.test_product_detail()
+    tester.test_categories()
+    tester.test_reviews()
+    tester.test_adversarial()
+    
+    # Epic E2 - Voucher tests
+    tester.test_vouchers_validate()
+    tester.test_vouchers_list()
+    
+    # Print summary and exit
+    return tester.print_summary()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

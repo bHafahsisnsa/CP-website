@@ -1,0 +1,351 @@
+/* =====================================================================
+   Collector Parfum — Dual Theme (Light default + Dark toggle) + Glass
+   Light = original paper look with added depth (glass). 
+   Dark  = cinematic, activated by `html.cp-dark` on the storefront (.cp-store).
+   /admin never carries .cp-store, so it stays on its own theme.
+   ===================================================================== */
+:root {
+  /* Cinematic dark palette */
+  --cp-night: #070708;
+  --cp-graphite: #101114;
+  --cp-smoke: #17181c;
+  --cp-text-on-night: rgba(255, 252, 246, 0.92);
+  --cp-text-muted-on-night: rgba(255, 252, 246, 0.70);
+
+  /* Radius + accent ring */
+  --cp-radius-lg: 20px;
+  --cp-radius-xl: 26px;
+
+  /* Ambient washes */
+  --cp-hero-wash-dark:
+    radial-gradient(1200px 700px at 18% 6%, rgba(214, 195, 163, 0.16), transparent 55%),
+    radial-gradient(900px 600px at 84% 0%, rgba(184, 155, 106, 0.12), transparent 60%),
+    linear-gradient(180deg, rgba(7, 7, 8, 0.15), rgba(7, 7, 8, 0.92));
+  --cp-hero-wash-light:
+    radial-gradient(1100px 650px at 16% 4%, rgba(214, 195, 163, 0.22), transparent 55%),
+    radial-gradient(900px 600px at 88% 6%, rgba(184, 155, 106, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(255, 252, 246, 0.0), rgba(238, 231, 220, 0.35));
+}
+
+/* NOTE: .cp-store is a THEMING MARKER only (dark-mode remaps + portaled overlays
+   target it). It must NOT force `position`, because portaled overlays
+   (Dialog/Sheet/Select) also carry `.cp-store` and depend on their own
+   fixed/absolute positioning from Radix. The storefront shell adds its own
+   `relative` utility where a positioning context is actually needed. */
+.cp-store { }
+
+/* ---------- GLASS PRIMITIVES (light default) ---------- */
+/* CATATAN PENTING (fix bug posisi):
+   `position` untuk primitive glass ditulis via `:where()` (spesifisitas 0) supaya utility
+   posisi Tailwind (`absolute` / `fixed` / `sticky`, spesifisitas 0,1,0) tetap MENANG.
+   Sebelumnya `.cp-glass-pill { position: relative }` menimpa `absolute` — akibatnya tombol
+   tutup di QuickViewModal ("absolute top-3 right-3" + "cp-glass-pill") melompat ke kiri-atas.
+   `absolute`/`fixed` juga membentuk containing block, jadi ::before/::after tetap aman. */
+:where(.cp-glass, .cp-glass-pill, .cp-btn-gold) {
+  position: relative;
+}
+
+.cp-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.60) 0%, rgba(255, 252, 246, 0.40) 46%, rgba(255, 252, 246, 0.56) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--cp-radius-lg);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -16px 26px -20px rgba(38, 28, 14, 0.20),
+    0 22px 48px -14px rgba(38, 28, 14, 0.16),
+    0 6px 16px -8px rgba(38, 28, 14, 0.10);
+}
+.cp-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  /* top sheen */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.60), transparent 32%);
+}
+.cp-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  /* diagonal glass streak — reflection highlight top-left → bottom-right */
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(255, 255, 255, 0) 24%,
+    rgba(255, 255, 255, 0) 70%,
+    rgba(255, 255, 255, 0.14) 100%
+  );
+}
+/* Composable: deeper 3D lift for hero-level surfaces */
+.cp-glass-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -20px 34px -22px rgba(38, 28, 14, 0.26),
+    0 34px 72px -16px rgba(38, 28, 14, 0.24),
+    0 12px 26px -10px rgba(38, 28, 14, 0.14);
+}
+.cp-glass-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(255, 252, 246, 0.72), rgba(255, 252, 246, 0.72)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(214, 195, 163, 0.55) 48%, rgba(255, 255, 255, 0.5)) border-box;
+}
+.cp-glass-hover {
+  transition: transform 320ms cubic-bezier(.22, 1, .36, 1),
+              box-shadow 320ms cubic-bezier(.22, 1, .36, 1),
+              border-color 320ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+}
+.cp-glass-hover:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -18px 30px -22px rgba(38, 28, 14, 0.22),
+    0 34px 74px -14px rgba(38, 28, 14, 0.22),
+    0 12px 26px -8px rgba(38, 28, 14, 0.12);
+}
+
+/* Circular / pill icon buttons in glass (wishlist, close, controls) */
+.cp-glass-pill {
+  background: rgba(255, 252, 246, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px -6px rgba(38, 28, 14, 0.16),
+    0 2px 6px -2px rgba(38, 28, 14, 0.10);
+  transition: background-color 240ms ease, box-shadow 240ms ease, transform 240ms ease;
+}
+.cp-glass-pill:hover {
+  background: rgba(255, 252, 246, 0.86);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 12px 26px -6px rgba(38, 28, 14, 0.20),
+    0 3px 8px -2px rgba(38, 28, 14, 0.12);
+}
+
+/* High-opacity glass for modals & drawers (keeps text crisp/readable) */
+.cp-glass-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 252, 246, 0.88) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 44px 100px -24px rgba(38, 28, 14, 0.30),
+    0 14px 34px -12px rgba(38, 28, 14, 0.18);
+}
+.cp-glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 20%);
+}
+
+/* Always-dark glass — chips/labels floating over media/video (theme-agnostic) */
+.cp-glass-dark {
+  background: linear-gradient(180deg, rgba(22, 23, 28, 0.52) 0%, rgba(9, 9, 12, 0.44) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    0 20px 46px -12px rgba(0, 0, 0, 0.46),
+    0 6px 16px -6px rgba(0, 0, 0, 0.30);
+  color: #fff;
+}
+.cp-glass-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 34%);
+}
+
+/* Soft elevation helper (depth without full glass) */
+.cp-elev { box-shadow: 0 14px 40px rgba(38, 28, 14, 0.10), 0 3px 10px rgba(38, 28, 14, 0.06); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-glass-hover:hover { transform: none; }
+}
+
+/* ---------- DARK THEME (html.cp-dark .cp-store) ---------- */
+html.cp-dark .cp-store {
+  --background: 240 7% 4%;
+  --foreground: 40 33% 94%;
+  --card: 240 7% 7%;
+  --card-foreground: 40 33% 94%;
+  --popover: 240 7% 6%;
+  --popover-foreground: 40 33% 94%;
+  --primary: 40 33% 94%;
+  --primary-foreground: 240 7% 6%;
+  --secondary: 240 5% 13%;
+  --secondary-foreground: 40 33% 94%;
+  --muted: 240 5% 13%;
+  --muted-foreground: 40 14% 74%;
+  --accent: 240 5% 16%;
+  --accent-foreground: 40 33% 94%;
+  --border: 240 6% 22%;
+  --input: 240 6% 26%;
+  --ring: 35 35% 55%;
+
+  /* Flip bg-only paper tokens to dark surfaces (safe: not used as text) */
+  --cp-paper-warm: #15161b;
+  --cp-paper-fog: #101115;
+
+  background-color: var(--cp-night);
+  color: var(--cp-text-on-night);
+}
+
+/* Dark glass look */
+html.cp-dark .cp-glass {
+  background: linear-gradient(180deg, rgba(26, 27, 33, 0.58) 0%, rgba(16, 17, 21, 0.5) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(18px) saturate(160%) brightness(1.05);
+  backdrop-filter: blur(18px) saturate(160%) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -18px 30px -22px rgba(0, 0, 0, 0.6),
+    0 16px 40px -12px rgba(0, 0, 0, 0.5),
+    0 44px 96px -20px rgba(0, 0, 0, 0.55);
+}
+html.cp-dark .cp-glass::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 30%); }
+html.cp-dark .cp-glass::after {
+  background: linear-gradient(118deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.07) 100%);
+}
+html.cp-dark .cp-glass-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -22px 36px -24px rgba(0, 0, 0, 0.66),
+    0 40px 90px -18px rgba(0, 0, 0, 0.62),
+    0 14px 32px -10px rgba(0, 0, 0, 0.5);
+}
+html.cp-dark .cp-glass-border {
+  background:
+    linear-gradient(rgba(20, 21, 26, 0.6), rgba(20, 21, 26, 0.6)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.30), rgba(214, 195, 163, 0.24) 45%, rgba(255, 255, 255, 0.06)) border-box;
+}
+html.cp-dark .cp-glass-hover:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 30px 64px -14px rgba(0, 0, 0, 0.62),
+    0 64px 120px -24px rgba(0, 0, 0, 0.66);
+}
+html.cp-dark .cp-glass-pill {
+  background: rgba(34, 35, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 10px 24px -6px rgba(0, 0, 0, 0.55);
+  color: var(--cp-text-on-night);
+}
+html.cp-dark .cp-glass-pill:hover { background: rgba(46, 47, 56, 0.72); }
+
+/* ---------- PRIMARY GOLD CTA — "gold-foil" glass (theme-agnostic) ----------
+   Champagne→brass gradient with a glossy top sheen and ink text for maximum
+   legibility + luxury feel. Works over BOTH light paper and dark cinematic
+   backdrops without special-casing (gold + ink is theme-agnostic). */
+.cp-btn-gold {
+  overflow: hidden;
+  background: linear-gradient(160deg, #e4d3ab 0%, #cdb47e 46%, #ab8b52 100%);
+  color: var(--cp-ink);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -12px 22px -16px rgba(74, 55, 18, 0.55),
+    0 12px 28px -10px rgba(120, 92, 30, 0.42),
+    0 2px 8px -3px rgba(74, 55, 18, 0.28);
+  transition: box-shadow 240ms cubic-bezier(.22, 1, .36, 1),
+              filter 240ms cubic-bezier(.22, 1, .36, 1),
+              transform 240ms cubic-bezier(.22, 1, .36, 1);
+}
+.cp-btn-gold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent 44%);
+}
+.cp-btn-gold:hover {
+  filter: brightness(1.045);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -12px 22px -16px rgba(74, 55, 18, 0.55),
+    0 16px 34px -10px rgba(120, 92, 30, 0.5),
+    0 3px 10px -3px rgba(74, 55, 18, 0.32);
+}
+.cp-btn-gold:active { transform: translateY(0) scale(0.985); }
+.cp-btn-gold:disabled,
+.cp-btn-gold[disabled] { opacity: 0.55; cursor: not-allowed; filter: saturate(0.85); transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-btn-gold:hover { transform: none; }
+}
+
+html.cp-dark .cp-glass-panel {
+  background: linear-gradient(180deg, rgba(25, 26, 32, 0.9) 0%, rgba(16, 17, 21, 0.88) 100%);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 48px 110px -24px rgba(0, 0, 0, 0.72),
+    0 16px 38px -12px rgba(0, 0, 0, 0.55);
+  color: var(--cp-text-on-night);
+}
+html.cp-dark .cp-glass-panel::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 20%); }
+html.cp-dark .cp-elev { box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.4); }
+
+/* Dark remaps for legacy paper/ink tokens used as text/bg on same element */
+html.cp-dark .cp-store [class*="bg-[color:var(--cp-paper)]"]   { background-color: #0d0e12 !important; }
+html.cp-dark .cp-store [class*="text-[color:var(--cp-ink)]"]   { color: var(--cp-text-on-night) !important; }
+html.cp-dark .cp-store [class*="border-[color:var(--cp-ink)]"] { border-color: rgba(255, 255, 255, 0.18) !important; }
+html.cp-dark .cp-store [class*="bg-[color:var(--cp-ink)]"]     { background-color: #17181e !important; }
+html.cp-dark .cp-store [class*="bg-[color:var(--cp-market-blue-soft)]"] { background-color: rgba(184, 155, 106, 0.16) !important; }
+
+/* Warm off-white text remaps (preserve hierarchy) */
+html.cp-dark .cp-store [class~="text-black"]    { color: rgba(245, 241, 232, 0.92) !important; }
+html.cp-dark .cp-store [class*="text-black/20"] { color: rgba(245, 241, 232, 0.28) !important; }
+html.cp-dark .cp-store [class*="text-black/25"] { color: rgba(245, 241, 232, 0.32) !important; }
+html.cp-dark .cp-store [class*="text-black/30"] { color: rgba(245, 241, 232, 0.38) !important; }
+html.cp-dark .cp-store [class*="text-black/35"] { color: rgba(245, 241, 232, 0.42) !important; }
+html.cp-dark .cp-store [class*="text-black/40"] { color: rgba(245, 241, 232, 0.48) !important; }
+html.cp-dark .cp-store [class*="text-black/45"] { color: rgba(245, 241, 232, 0.52) !important; }
+html.cp-dark .cp-store [class*="text-black/50"] { color: rgba(245, 241, 232, 0.58) !important; }
+html.cp-dark .cp-store [class*="text-black/55"] { color: rgba(245, 241, 232, 0.62) !important; }
+html.cp-dark .cp-store [class*="text-black/60"] { color: rgba(245, 241, 232, 0.68) !important; }
+html.cp-dark .cp-store [class*="text-black/70"] { color: rgba(245, 241, 232, 0.76) !important; }
+html.cp-dark .cp-store [class*="text-black/75"] { color: rgba(245, 241, 232, 0.80) !important; }
+html.cp-dark .cp-store [class*="text-black/80"] { color: rgba(245, 241, 232, 0.85) !important; }
+
+html.cp-dark .cp-store [class*="border-black/5"]  { border-color: rgba(255, 255, 255, 0.07) !important; }
+html.cp-dark .cp-store [class*="border-black/10"] { border-color: rgba(255, 255, 255, 0.11) !important; }
+html.cp-dark .cp-store [class*="border-black/12"] { border-color: rgba(255, 255, 255, 0.12) !important; }
+html.cp-dark .cp-store [class*="border-black/15"] { border-color: rgba(255, 255, 255, 0.15) !important; }
+html.cp-dark .cp-store [class*="border-black/20"] { border-color: rgba(255, 255, 255, 0.20) !important; }
+html.cp-dark .cp-store [class*="border-black/25"] { border-color: rgba(255, 255, 255, 0.24) !important; }
+html.cp-dark .cp-store [class*="border-black/40"] { border-color: rgba(255, 255, 255, 0.34) !important; }
+
+html.cp-dark .cp-store [class*="bg-black/5"]:not([class*="bg-black/50"]):not([class*="bg-black/55"]) { background-color: rgba(255, 255, 255, 0.06) !important; }
+html.cp-dark .cp-store [class*="bg-black/10"] { background-color: rgba(255, 255, 255, 0.10) !important; }
+html.cp-dark .cp-store [class*="bg-black/15"] { background-color: rgba(255, 255, 255, 0.14) !important; }
+
+html.cp-dark .cp-store [class~="bg-white"] { background-color: rgba(255, 255, 255, 0.06) !important; }
+html.cp-dark .cp-store [class*="bg-white/80"] { background-color: rgba(18, 19, 23, 0.62) !important; color: var(--cp-text-on-night); }
+
+html.cp-dark .cp-store .cp-eyebrow { color: var(--cp-brass) !important; }
+html.cp-dark .cp-store input::placeholder,
+html.cp-dark .cp-store textarea::placeholder { color: rgba(255, 252, 246, 0.42); }

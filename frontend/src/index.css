@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 96%;
+    --foreground: 0 0% 8%;
+    --card: 40 33% 98%;
+    --card-foreground: 0 0% 8%;
+    --popover: 40 33% 98%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 0 0% 8%;
+    --primary-foreground: 40 33% 98%;
+    --secondary: 35 22% 92%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 35 22% 92%;
+    --muted-foreground: 0 0% 38%;
+    --accent: 35 22% 92%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 4 74% 40%;
+    --destructive-foreground: 40 33% 98%;
+    --border: 35 18% 84%;
+    --input: 35 18% 84%;
+    --ring: 35 35% 55%;
+    --radius: 0.75rem;
+
+    /* Collector Parfum custom tokens */
+    --cp-paper: #f7f3ea;
+    --cp-paper-warm: #fffcf6;
+    --cp-paper-fog: #eee7dc;
+    --cp-ink: #141414;
+    --cp-ink-soft: #2a2a2a;
+    --cp-champagne: #d6c3a3;
+    --cp-brass: #b89b6a;
+    /* CTA accent — repointed from the old Shopee orange to a deep antique gold
+       within the brand brass family. Kept the token NAME to avoid a risky mass
+       rename; every reference now reads as luxury gold instead of orange. */
+    --cp-market-blue: #9a7a34;      /* deep antique gold (accents: text, borders, dots) */
+    --cp-market-blue-soft: #f4ecda; /* soft champagne tint (subtle backgrounds) */
+
+    --announcement-h: 40px;
+    --header-h: 68px;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 40 33% 96%;
+    --card: 0 0% 7%;
+    --card-foreground: 40 33% 96%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 40 33% 96%;
+    --primary: 40 33% 96%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 40 33% 96%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 40 33% 96%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 35 35% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* framer-motion `useScroll({ target })` mengukur offset relatif terhadap scroll
+     container (default: <html>). Bila container `position: static`, framer-motion
+     mengeluarkan warning dev "Please ensure that the container has a non-static
+     position…". Memberi `relative` di <html> menghilangkan warning tanpa mengubah
+     layout (elemen `fixed` tetap relatif viewport). */
+  html {
+    position: relative;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-color: var(--cp-paper);
+    color: var(--cp-ink);
+  }
+
+  h1, h2, h3, h4, .cp-display {
+    font-family: 'DM Serif Display', 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .cp-mono { font-family: 'Azeret Mono', ui-monospace, monospace; }
+
+  /* Hide default scrollbar look */
+  ::selection {
+    background: var(--cp-ink);
+    color: var(--cp-paper);
+  }
+}
+
+@layer utilities {
+  .cp-container { @apply mx-auto w-full max-w-[1240px] px-4 sm:px-6 lg:px-10; }
+  /* Container IMMERSIVE — dipakai katalog (Shop) & PDP: lebih lebar dengan gutter tipis
+     supaya foto produk mendapat ruang maksimal. */
+  .cp-container-wide { @apply mx-auto w-full max-w-[1720px] px-3 sm:px-4 lg:px-6 xl:px-8; }
+  /* Beri "napas" samping ekstra HANYA untuk section beranda (tidak menyentuh Shop/PDP
+     yang sengaja immersive & diminta dibiarkan). Scoped ke [data-testid="home-page"]
+     sehingga header/footer/katalog/produk tidak terpengaruh. */
+  [data-testid="home-page"] .cp-container-wide { @apply px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-24; }
+  .cp-section { @apply py-14 sm:py-20 lg:py-28; }
+  /* Ritme vertikal lebih rapat untuk halaman beranda yang immersive (section berdempet,
+     fokus pada visual, bukan pada ruang kosong). */
+  .cp-section-md { @apply py-10 sm:py-14 lg:py-[72px]; }
+  /* Scrollbar tipis (panel filter katalog yang bisa di-scroll sendiri) */
+  .cp-thin-scroll { scrollbar-width: thin; }
+  .cp-thin-scroll::-webkit-scrollbar { width: 6px; }
+  .cp-thin-scroll::-webkit-scrollbar-track { background: transparent; }
+  .cp-thin-scroll::-webkit-scrollbar-thumb { background: rgba(20, 20, 20, 0.16); border-radius: 999px; }
+  .cp-thin-scroll:hover::-webkit-scrollbar-thumb { background: rgba(20, 20, 20, 0.28); }
+  .cp-eyebrow { @apply cp-mono text-[11px] sm:text-xs uppercase tracking-[0.22em] text-black/60; }
+  .cp-headline { font-family: 'DM Serif Display', serif; letter-spacing: -0.015em; line-height: 0.95; }
+  /* Wordmark logo — Bauhaus 93 (fallback geometric sans agar tetap rapi bila font gagal load). */
+  .cp-logo {
+    font-family: 'Bauhaus 93', 'Poppins', 'Futura', 'Century Gothic', ui-rounded, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+  .cp-hover-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    transition: background-size 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .cp-hover-underline:hover { background-size: 100% 1px; }
+
+  .cp-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.9'/></svg>");
+  }
+
+  .cp-fade-mask-r {
+    -webkit-mask-image: linear-gradient(90deg, black 85%, transparent 100%);
+    mask-image: linear-gradient(90deg, black 85%, transparent 100%);
+  }
+
+  .cp-paper-wash {
+    background: linear-gradient(180deg, #FFFCF6 0%, #F7F3EA 55%, #EEE7DC 100%);
+  }
+  .cp-ink-wash {
+    background: linear-gradient(180deg, #141414 0%, #0B0B0C 100%);
+  }
+
+  /* Hide scrollbar for horizontal scrollers */
+  .cp-noscrollbar::-webkit-scrollbar { display: none; }
+  .cp-noscrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* Marquee animations */
+@keyframes cp-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.cp-marquee-track {
+  display: flex;
+  gap: 3rem;
+  width: max-content;
+  animation: cp-marquee 28s linear infinite;
+}
+
+.cp-marquee-track.fast { animation-duration: 18s; }
+.cp-marquee-track.slow { animation-duration: 44s; }
+.cp-marquee-track.reverse { animation-direction: reverse; }
+.cp-marquee:hover .cp-marquee-track { animation-play-state: paused; }
+
+@keyframes cp-spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.cp-spin-slow { animation: cp-spin-slow 14s linear infinite; }
+
+@keyframes cp-pulse-soft {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.cp-pulse-soft { animation: cp-pulse-soft 2.4s ease-in-out infinite; }
+
+/* Radix Collapsible (section filter katalog) — animasi buka/tutup halus */
+@keyframes cp-collapsible-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+@keyframes cp-collapsible-up {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.cp-collapsible { overflow: hidden; }
+.cp-collapsible[data-state='open'] { animation: cp-collapsible-down 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.cp-collapsible[data-state='closed'] { animation: cp-collapsible-up 180ms cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .cp-collapsible[data-state='open'],
+  .cp-collapsible[data-state='closed'] { animation: none !important; }
+}
+
+/* Scrollbar tipis versi dark storefront */
+html.cp-dark .cp-thin-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
+html.cp-dark .cp-thin-scroll:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); }
+
+/* FAB chat disembunyikan saat ada overlay Radix terbuka (Dialog/Sheet/Drawer menandai
+   <body data-scroll-locked>). Tanpa ini bubble chat (z-60) menutupi CTA di dalam overlay,
+   mis. tombol "Terapkan" pada filter sheet mobile. */
+body[data-scroll-locked] .cp-chat-widget {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+/* Di PDP (mobile) ada sticky bar "Tambah ke Keranjang / Beli" di bawah layar.
+   Naikkan posisi FAB chat agar tidak menutupi tombol CTA tersebut. */
+@media (max-width: 1023px) {
+  body.cp-has-sticky-atc .cp-chat-widget { bottom: 8.75rem; }
+}
+
+/* ---------- GERAK IDLE (immersive) ----------
+   Prinsip: elemen bergerak PELAN saat tidak disentuh, lalu TENANG (pause) saat di-hover
+   supaya konten mudah dibaca/diklik. Semua dimatikan pada prefers-reduced-motion. */
+@keyframes cp-kb {
+  0%   { transform: scale(1.04) translate3d(0, 0, 0); }
+  100% { transform: scale(1.14) translate3d(-1.6%, -1.4%, 0); }
+}
+/* Ken Burns: pan+zoom lambat untuk foto editorial & hero. */
+.cp-kb { animation: cp-kb 26s ease-in-out infinite alternate; will-change: transform; }
+.cp-kb-slow { animation-duration: 46s; }
+.cp-kb-hero { animation: cp-kb 40s ease-in-out infinite alternate; will-change: transform; }
+.group:hover .cp-kb { animation-play-state: paused; }
+
+@keyframes cp-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+.cp-float-slow { animation: cp-float 6.5s ease-in-out infinite; }
+
+/* Sheen: kilau menyapu saat kartu di-hover (elemen span, bukan pseudo, agar urutan
+   tumpukan mengikuti DOM sehingga tombol di dalam kartu tetap di atas kilau). */
+.cp-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.4) 46%, transparent 62%);
+  transform: translateX(-130%);
+  transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.group:hover .cp-sheen { transform: translateX(130%); }
+html.cp-dark .cp-sheen {
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.16) 46%, transparent 62%);
+}
+
+/* Tepi carousel memudar -> kesan konten berlanjut di luar layar. */
+.cp-fade-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-kb, .cp-kb-hero, .cp-float-slow { animation: none !important; }
+  .cp-sheen { transition: none !important; }
+}
+
+/* Focus visible ring */
+:focus-visible { outline: 2px solid var(--cp-champagne); outline-offset: 2px; }
+
+/* Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cp-marquee-track { animation: none !important; }
+  .cp-spin-slow { animation: none !important; }
+  .cp-pulse-soft { animation: none !important; }
+  * { scroll-behavior: auto !important; }
+}
+
+/* Utility: hide native scroll for Embla */
+.embla__viewport { overflow: hidden; }
+.embla__container { display: flex; }
+.embla__slide { flex: 0 0 auto; }
+
+[data-debug-wrapper="true"] { display: contents !important; }
+
