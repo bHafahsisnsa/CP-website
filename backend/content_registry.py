@@ -27,6 +27,40 @@ def REP(name, label, item):
     return {"name": name, "label": label, "type": "repeater", "item": item}
 
 
+def TOG(name, label):
+    return {"name": name, "label": label, "type": "toggle"}
+
+
+def SEL(name, label, options):
+    """options: list of {"value","label"}."""
+    return {"name": name, "label": label, "type": "select", "options": options}
+
+
+def GAL(name, label):
+    """Galeri gambar: list {image, caption, to} — dipilih multi dari Media Manager."""
+    return {"name": name, "label": label, "type": "gallery"}
+
+
+# Urutan & visibilitas section Beranda (dipakai HomePage + section home_layout).
+HOME_SECTIONS = [
+    {"value": "hero", "label": "Hero"},
+    {"value": "marquee_words", "label": "Marquee (kata berjalan)"},
+    {"value": "story_strip", "label": "Cerita Kami (strip)"},
+    {"value": "occasion_section", "label": "Shop by Occasion"},
+    {"value": "character_section", "label": "Shop by Character"},
+    {"value": "trending", "label": "Sedang Trending"},
+    {"value": "media_editorial", "label": "Editorial (media grid)"},
+    {"value": "trust", "label": "Trust Strip"},
+    {"value": "featured", "label": "Koleksi Unggulan"},
+    {"value": "big_word", "label": "Manifesto (kata besar)"},
+    {"value": "new_arrivals", "label": "Baru Datang"},
+    {"value": "gallery", "label": "Galeri"},
+    {"value": "video", "label": "Video / Behind the Scenes"},
+    {"value": "testimonials", "label": "Testimoni"},
+    {"value": "faq", "label": "FAQ"},
+]
+
+
 SECTIONS = [
     # ----------------------------- GLOBAL -----------------------------
     {
@@ -90,7 +124,30 @@ SECTIONS = [
             "payment_badges": ["BCA", "BNI", "Mandiri", "OVO", "GoPay", "DANA", "COD"],
         },
     },
+    {
+        "key": "seo", "label": "SEO & Meta (global)", "group": "Global",
+        "fields": [
+            T("site_name", "Nama situs (akhiran judul tab)"),
+            T("home_title", "Judul halaman Beranda"),
+            TA("home_description", "Deskripsi meta Beranda"),
+            TA("default_description", "Deskripsi meta default (halaman lain)"),
+            IMG("og_image", "Gambar berbagi (Open Graph)"),
+        ],
+        "default": {
+            "site_name": "Collector Parfum",
+            "home_title": "Collector Parfum — Aroma yang Membekas",
+            "home_description": "Distributor parfum refill di Bandung sejak 1970. Biang impor pilihan, 30–100 ml, kirim ke seluruh Indonesia.",
+            "default_description": "Collector Parfum — parfum refill sejak 1970. Paledang · Pasir Kaliki · Gatot Subroto, Bandung.",
+            "og_image": "",
+        },
+    },
     # ----------------------------- HOMEPAGE -----------------------------
+    {
+        "key": "home_layout", "label": "Tata Letak Beranda", "group": "Beranda",
+        "fields": [REP("sections", "Urutan & tampil/sembunyikan section (geser untuk mengurutkan)",
+                       [SEL("key", "Section", HOME_SECTIONS), TOG("visible", "Tampilkan")])],
+        "default": {"sections": [{"key": o["value"], "visible": o["value"] != "gallery"} for o in HOME_SECTIONS]},
+    },
     {
         "key": "hero", "label": "Hero (Beranda)", "group": "Beranda",
         "fields": [
@@ -125,14 +182,6 @@ SECTIONS = [
         "default": {
             "eyebrow": "Cerita Kami",
             "text": "Dari kios sempit di Jalan Kolektor tahun 1970 hingga tiga cabang di Bandung — kami masih melakukan hal yang sama: memilih biang parfum terbaik, lalu mengisinya ulang untuk Anda.",
-        },
-    },
-    {
-        "key": "category_section", "label": "Keluarga Aroma (heading)", "group": "Beranda",
-        "fields": [T("eyebrow", "Eyebrow"), T("title", "Judul"), TA("subtitle", "Subjudul")],
-        "default": {
-            "eyebrow": "Keluarga Aroma", "title": "Temukan karaktermu.",
-            "subtitle": "Setiap keluarga aroma punya kepribadian sendiri. Pilih yang paling cocok dengan cerita hari-harimu.",
         },
     },
     {
@@ -207,6 +256,24 @@ SECTIONS = [
         "default": {"eyebrow": "New Arrivals", "title": "Baru Datang"},
     },
     {
+        "key": "gallery", "label": "Galeri (foto toko / Instagram)", "group": "Beranda",
+        "fields": [
+            T("eyebrow", "Eyebrow"), T("title", "Judul"), T("title_accent", "Judul aksen (brass)"),
+            TA("subtitle", "Subjudul"),
+            SEL("layout", "Tata letak", [{"value": "masonry", "label": "Masonry (tinggi bervariasi)"},
+                                          {"value": "grid", "label": "Grid rapi (persegi)"},
+                                          {"value": "strip", "label": "Strip geser horizontal"}]),
+            GAL("items", "Foto galeri"),
+            T("cta_label", "Tautan bawah - teks"), T("cta_to", "Tautan bawah - URL"),
+        ],
+        "default": {
+            "eyebrow": "Galeri", "title": "Dari rak", "title_accent": "ke tanganmu.",
+            "subtitle": "Suasana toko, botol pilihan, dan momen pelanggan kami.",
+            "layout": "masonry", "items": [],
+            "cta_label": "Ikuti @collectorparfum", "cta_to": "https://instagram.com/collectorparfum",
+        },
+    },
+    {
         "key": "video", "label": "Video / Behind the Scenes", "group": "Beranda",
         "fields": [
             T("eyebrow", "Eyebrow"), T("title", "Judul"), T("title_accent", "Judul aksen (brass)"),
@@ -265,6 +332,49 @@ SECTIONS = [
     },
     # ----------------------------- PAGES -----------------------------
     {
+        "key": "shop_page", "label": "Halaman Toko (/shop)", "group": "Halaman",
+        "fields": [
+            T("eyebrow", "Eyebrow"), T("title", "Judul"), T("title_accent", "Judul aksen (brass)"),
+            T("title_after", "Judul (setelah aksen)"),
+            T("seo_title", "Judul tab (SEO)"), TA("seo_description", "Deskripsi meta (SEO)"),
+            T("empty_title", "Teks saat tidak ada produk"), T("empty_hint", "Petunjuk saat kosong"),
+        ],
+        "default": {
+            "eyebrow": "Toko", "title": "Semua parfum, satu", "title_accent": "rak", "title_after": ".",
+            "seo_title": "Semua Parfum — Koleksi Collector Parfum",
+            "seo_description": "Jelajahi seluruh koleksi parfum refill: filter keluarga aroma, ukuran, gender, dan occasion. Kirim ke seluruh Indonesia.",
+            "empty_title": "Belum ada produk yang cocok.", "empty_hint": "Coba ubah filter atau kata kunci pencarian.",
+        },
+    },
+    {
+        "key": "locations_page", "label": "Halaman Lokasi (/lokasi)", "group": "Halaman",
+        "fields": [
+            T("eyebrow", "Eyebrow"), T("title", "Judul"), T("title_accent", "Judul aksen (brass)"),
+            T("title_after", "Judul (setelah aksen)"),
+            T("reviews_eyebrow", "Ulasan - eyebrow"), T("reviews_title", "Ulasan - judul"),
+            T("reviews_accent", "Ulasan - aksen (brass)"), T("reviews_after", "Ulasan - setelah aksen"),
+            T("seo_title", "Judul tab (SEO)"), TA("seo_description", "Deskripsi meta (SEO)"),
+        ],
+        "default": {
+            "eyebrow": "Lokasi Toko", "title": "Kunjungi", "title_accent": "butik", "title_after": "kami.",
+            "reviews_eyebrow": "Ulasan", "reviews_title": "Apa kata", "reviews_accent": "pelanggan", "reviews_after": ".",
+            "seo_title": "Lokasi Toko — Collector Parfum",
+            "seo_description": "Kunjungi toko Collector Parfum di Bandung: Paledang, Pasir Kaliki, Gatot Subroto. Alamat, jam buka, dan petunjuk arah.",
+        },
+    },
+    {
+        "key": "voucher_page", "label": "Halaman Voucher (/voucher)", "group": "Halaman",
+        "fields": [
+            T("eyebrow", "Eyebrow"), T("title", "Judul"), TA("subtitle", "Subjudul"),
+            T("list_title", "Judul daftar voucher"),
+        ],
+        "default": {
+            "eyebrow": "Voucher", "title": "Kumpulkan & pakai voucher.",
+            "subtitle": "Diskon dihitung langsung oleh sistem saat checkout — angka di keranjang dan di pembayaran selalu sama.",
+            "list_title": "Voucher Tersedia",
+        },
+    },
+    {
         "key": "about", "label": "Halaman Tentang", "group": "Halaman",
         "fields": [
             T("eyebrow", "Eyebrow"), T("title", "Judul"), T("title_accent", "Judul aksen (brass)"),
@@ -311,8 +421,14 @@ SECTIONS = [
             TA("subtitle", "Subjudul"), T("response_note", "Catatan respons"),
             REP("items", "Info kontak", [T("label", "Label"), T("value", "Nilai"), T("href", "Tautan")]),
             TA("map_embed", "URL embed peta (Google Maps)"),
+            T("stores_eyebrow", "Toko offline - eyebrow"), T("stores_title", "Toko offline - judul"),
+            T("stores_accent", "Toko offline - aksen (brass)"), T("stores_after", "Toko offline - setelah aksen"),
+            T("stores_link_label", "Toko offline - teks tautan"),
+            T("form_success", "Pesan sukses form"),
         ],
         "default": {
+            "stores_eyebrow": "Kunjungi Kami", "stores_title": "Toko", "stores_accent": "offline", "stores_after": "kami.",
+            "stores_link_label": "Lihat semua lokasi", "form_success": "Tim kami akan membalas dalam 1x24 jam.",
             "eyebrow": "Kontak", "title": "Mari", "title_accent": "ngobrol.",
             "subtitle": "Tanya ketersediaan aroma, minta rekomendasi, atau berdiskusi soal pembelian dalam jumlah besar — tim kami siap membantu pada jam kerja.",
             "response_note": "Senin–Jumat 09.00–17.00 · Sabtu 09.00–14.00 WIB",
@@ -339,4 +455,5 @@ def default_content():
 
 def schema():
     """Skema untuk form admin (tanpa data)."""
-    return [{"key": s["key"], "label": s["label"], "group": s["group"], "fields": s["fields"]} for s in SECTIONS]
+    return [{"key": s["key"], "label": s["label"], "group": s["group"], "fields": s["fields"], "default": s["default"]}
+            for s in SECTIONS]

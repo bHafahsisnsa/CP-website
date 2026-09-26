@@ -17,6 +17,14 @@ import { useCatalog } from '../store/CatalogContext';
 import { fetchProducts } from '../services/catalog';
 import { Reveal } from '../components/shared/Reveal';
 import { formatIDR } from '../lib/format';
+import { useContent } from '../store/ContentContext';
+
+const SHOP_DEFAULT = {
+  eyebrow: 'Toko', title: 'Semua parfum, satu', title_accent: 'rak', title_after: '.',
+  seo_title: 'Semua Parfum — Koleksi Collector Parfum',
+  seo_description: 'Jelajahi seluruh koleksi parfum refill: filter keluarga aroma, ukuran, gender, dan occasion. Kirim ke seluruh Indonesia.',
+  empty_title: 'Belum ada produk yang cocok.', empty_hint: 'Coba ubah atau reset filter.',
+};
 
 const CONCENTRATIONS = ['EDP', 'EDT'];
 const GENDERS = ['Pria', 'Wanita', 'Unisex'];
@@ -60,6 +68,7 @@ export default function ShopPage() {
   const navigate = useNavigate();
   const { openQuickView } = useQuickView();
   const { categories, occasions, characters } = useCatalog();
+  const cms = useContent('shop_page', SHOP_DEFAULT);
 
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [density, setDensity] = React.useState('normal'); // normal (kartu besar) | compact
@@ -233,18 +242,15 @@ export default function ShopPage() {
 
   return (
     <div className="cp-container-wide pt-4 sm:pt-6 pb-16 sm:pb-20" data-testid="shop-page">
-      <Seo
-        title="Semua Parfum — Koleksi Collector Parfum"
-        description="Jelajahi seluruh koleksi parfum original: filter berdasarkan kategori aroma, konsentrasi, gender, dan notes. Pengiriman nasional, original & bersegel."
-      />
+      <Seo title={cms.seo_title} description={cms.seo_description} />
 
       {/* HEADER — kompak: tipografi dikecilkan agar fokus pindah ke gambar produk. */}
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <div className="min-w-0">
-          <div className="cp-eyebrow text-[9.5px] sm:text-[10px]">Toko</div>
+          <div className="cp-eyebrow text-[9.5px] sm:text-[10px]">{cms.eyebrow}</div>
           <Reveal>
             <h1 className="cp-headline mt-1 text-[28px] sm:text-[34px] lg:text-[42px] leading-[0.98]">
-              Semua parfum, satu <em className="not-italic italic text-[color:var(--cp-brass)]">rak</em>.
+              {cms.title} <em className="not-italic italic text-[color:var(--cp-brass)]">{cms.title_accent}</em>{cms.title_after}
             </h1>
           </Reveal>
         </div>
@@ -366,8 +372,8 @@ export default function ShopPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="py-24 text-center" data-testid="shop-grid-empty">
-              <div className="cp-headline text-3xl">Belum ada produk yang cocok.</div>
-              <div className="text-sm text-black/60 mt-2">Coba ubah atau reset filter.</div>
+              <div className="cp-headline text-3xl">{cms.empty_title}</div>
+              <div className="text-sm text-black/60 mt-2">{cms.empty_hint}</div>
               <Button
                 onClick={clearAll}
                 className="mt-6 rounded-full bg-[color:var(--cp-ink)] text-[color:var(--cp-paper)] hover:bg-black"

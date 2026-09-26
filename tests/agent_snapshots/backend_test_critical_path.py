@@ -82,7 +82,7 @@ class CriticalPathTester:
             # Check critical sections exist
             critical_sections = [
                 "announcement", "header", "footer", "hero", "marquee_words",
-                "category_section", "occasion_section", "character_section",
+                "home_layout", "gallery", "occasion_section", "character_section",
                 "testimonials", "faq"
             ]
             

@@ -2,6 +2,8 @@
 // Mengatur <title>, meta description, canonical, Open Graph/Twitter, dan JSON-LD
 // secara imperatif via document.head (kompatibel React 19, tanpa react-helmet).
 import { useEffect } from 'react';
+import { useContent } from '../../store/ContentContext';
+import { resolveMediaUrl } from '../../lib/mediaUrl';
 
 function upsert(selector, create, attrs) {
   let el = document.head.querySelector(selector);
@@ -27,7 +29,11 @@ function setMeta(name, content, prop = false) {
   );
 }
 
-export default function Seo({ title, description, canonical, image, type = 'website', jsonLd }) {
+export default function Seo({ title: rawTitle, description: rawDesc, canonical, image: rawImage, type = 'website', jsonLd }) {
+  const g = useContent('seo', { site_name: '', default_description: '', og_image: '' });
+  const title = rawTitle;
+  const description = rawDesc || g.default_description;
+  const image = rawImage || (g.og_image ? resolveMediaUrl(g.og_image) : undefined);
   useEffect(() => {
     if (title) document.title = title;
     setMeta('description', description);

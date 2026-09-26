@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ExternalLink, Save, Loader2, Undo2, Search, Monitor, Tablet, Smartphone,
   Home, Info, Mail, ShoppingBag, RefreshCw, Eye, EyeOff, CheckCircle2,
-  History, RotateCcw, X,
+  History, RotateCcw, X, MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getContentSchema, getContentAdmin, updateContentSection,
@@ -21,13 +21,13 @@ import { Badge } from '../../components/ui/badge';
 
 // Tautan preview cepat per section (auto-navigate iframe ke halaman relevan).
 const SECTION_ROUTE = {
-  hero: '/', announcement: '/', featured_categories: '/', featured_products: '/',
-  brand_promise: '/', video_showcase: '/', ig_gallery: '/', testimonials: '/',
-  faq_home: '/', cta_home: '/',
-  about: '/tentang', contact: '/kontak',
-  header: '/', footer: '/',
-  shop_intro: '/shop', product_detail: '/shop',
-  auth_promo: '/login', account_help: '/akun',
+  about: '/tentang', contact: '/kontak', shop_page: '/shop', locations_page: '/lokasi', voucher_page: '/voucher',
+};
+const SECTION_HINT = {
+  home_layout: 'Geser item untuk mengubah urutan section di Beranda; matikan "Tampilkan" untuk menyembunyikan tanpa menghapus isinya.',
+  gallery: 'Pilih beberapa foto sekaligus dari Media Manager. Section tampil di Beranda bila ada minimal 1 foto dan diaktifkan di Tata Letak Beranda.',
+  seo: 'Judul tab & deskripsi pencarian Google. Gambar Open Graph dipakai saat tautan dibagikan ke WhatsApp/Instagram.',
+  hero: 'Latar bisa video (.mp4) atau foto. Untuk foto, ubah tipe ke "image" lalu pilih gambar.',
 };
 
 const DEVICES = [
@@ -39,6 +39,7 @@ const DEVICES = [
 const QUICK_ROUTES = [
   { path: '/', label: 'Beranda', icon: Home },
   { path: '/shop', label: 'Toko', icon: ShoppingBag },
+  { path: '/lokasi', label: 'Lokasi', icon: MapPin },
   { path: '/tentang', label: 'Tentang', icon: Info },
   { path: '/kontak', label: 'Kontak', icon: Mail },
 ];
@@ -123,7 +124,7 @@ export default function AdminContentPage() {
     setActive(key);
     setDraft({ ...(content[key] || {}) });
     const route = SECTION_ROUTE[key] || '/';
-    if (route !== previewPath) setPreviewPath(route);
+    if (route !== previewPath) { setPreviewPath(route); setIframeReady(false); setIframeKey((k) => k + 1); }
   };
 
   const save = async () => {
@@ -278,6 +279,9 @@ export default function AdminContentPage() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">{activeSection.group} · <span className="font-mono">{activeSection.key}</span></div>
+                      {SECTION_HINT[activeSection.key] ? (
+                        <div className="text-xs text-muted-foreground mt-2 rounded-md bg-muted/60 px-2.5 py-1.5" data-testid="cms-section-hint">{SECTION_HINT[activeSection.key]}</div>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button variant="ghost" size="sm" onClick={openHistory} className="gap-1.5 text-muted-foreground" data-testid="cms-history-open" title="Riwayat perubahan">

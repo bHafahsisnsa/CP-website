@@ -9,6 +9,14 @@ import { fetchStores, fetchStoreReviews } from '../services/stores';
 import { StoreMap } from '../components/shared/StoreMap';
 import { GoogleReviews, RatingSummary } from '../components/shared/GoogleReviews';
 import { handleImageError, resolveMediaUrl } from '../lib/mediaUrl';
+import { useContent } from '../store/ContentContext';
+
+const LOC_DEFAULT = {
+  eyebrow: 'Lokasi Toko', title: 'Kunjungi', title_accent: 'butik', title_after: 'kami.',
+  reviews_eyebrow: 'Ulasan', reviews_title: 'Apa kata', reviews_accent: 'pelanggan', reviews_after: '.',
+  seo_title: 'Lokasi Toko — Collector Parfum',
+  seo_description: 'Kunjungi butik Collector Parfum di Bandung. Alamat, jam buka, dan petunjuk arah lengkap.',
+};
 
 const digits = (s) => String(s || '').replace(/[^0-9]/g, '');
 const directionsUrl = (loc) =>
@@ -82,6 +90,7 @@ export default function StoreLocationsPage() {
   const [data, setData] = React.useState({ locations: [], config: {} });
   const [reviews, setReviews] = React.useState({ source: 'manual', summary: { avg: 0, count: 0 }, reviews: [] });
   const [loading, setLoading] = React.useState(true);
+  const cms = useContent('locations_page', LOC_DEFAULT);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -97,16 +106,13 @@ export default function StoreLocationsPage() {
 
   return (
     <div className="cp-container cp-section" data-testid="store-locations-page">
-      <Seo
-        title="Lokasi Toko — Collector Parfum"
-        description="Kunjungi butik Collector Parfum di Bandung. Alamat, jam buka, dan petunjuk arah lengkap."
-      />
+      <Seo title={cms.seo_title} description={cms.seo_description} />
 
       <div className="max-w-3xl">
-        <div className="cp-eyebrow">Lokasi Toko</div>
+        <div className="cp-eyebrow">{cms.eyebrow}</div>
         <Reveal>
           <h1 className="cp-headline text-4xl sm:text-6xl mt-2 leading-none">
-            Kunjungi <em className="not-italic italic text-[color:var(--cp-brass)]">butik</em> kami.
+            {cms.title} <em className="not-italic italic text-[color:var(--cp-brass)]">{cms.title_accent}</em> {cms.title_after}
           </h1>
         </Reveal>
         {config.intro ? <p className="mt-4 text-sm sm:text-base text-black/70">{config.intro}</p> : null}
@@ -139,10 +145,10 @@ export default function StoreLocationsPage() {
         <section className="mt-16">
           <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
             <div>
-              <div className="cp-eyebrow">Ulasan</div>
+              <div className="cp-eyebrow">{cms.reviews_eyebrow}</div>
               <Reveal>
                 <h2 className="cp-headline text-3xl sm:text-5xl mt-2 leading-none">
-                  Apa kata <em className="not-italic italic text-[color:var(--cp-brass)]">pelanggan</em>.
+                  {cms.reviews_title} <em className="not-italic italic text-[color:var(--cp-brass)]">{cms.reviews_accent}</em>{cms.reviews_after}
                 </h2>
               </Reveal>
             </div>

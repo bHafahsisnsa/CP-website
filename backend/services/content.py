@@ -20,6 +20,24 @@ def _coerce(field, value):
         if not isinstance(value, list):
             return []
         return [str(x)[:500] for x in value[:60]]
+    if t == "toggle":
+        return bool(value) if not isinstance(value, str) else value.lower() in ("1", "true", "yes", "on")
+    if t == "select":
+        allowed = {o["value"] for o in field.get("options", [])}
+        v = str(value) if value is not None else ""
+        return v if v in allowed else ""
+    if t == "gallery":
+        if not isinstance(value, list):
+            return []
+        out = []
+        for row in value[:60]:
+            if isinstance(row, str):
+                row = {"image": row}
+            if not isinstance(row, dict) or not row.get("image"):
+                continue
+            out.append({"image": str(row.get("image"))[:1500], "caption": str(row.get("caption") or "")[:300],
+                        "to": str(row.get("to") or "")[:500]})
+        return out
     if t == "repeater":
         if not isinstance(value, list):
             return []

@@ -29,6 +29,8 @@ const CONTACT_DEFAULT = {
     { label: 'Toko Pusat', value: 'Jl. Paledang No. 58, Bandung', href: 'https://www.google.com/maps?q=Collector+Parfum+Jl.+Paledang+No.58+Bandung' },
   ],
   map_embed: 'https://www.google.com/maps?q=Collector+Parfum+Jl.+Paledang+No.58+Bandung&output=embed',
+  stores_eyebrow: 'Kunjungi Kami', stores_title: 'Toko', stores_accent: 'offline', stores_after: 'kami.',
+  stores_link_label: 'Lihat semua lokasi', form_success: 'Tim kami akan membalas dalam 1x24 jam.',
 };
 
 export default function ContactPage() {
@@ -52,7 +54,7 @@ export default function ContactPage() {
       toast.error('Mohon lengkapi nama, email, dan pesan Anda.');
       return;
     }
-    toast.success('Pesan terkirim', { description: 'Tim kami akan membalas dalam 1x24 jam.' });
+    toast.success('Pesan terkirim', { description: c.form_success });
     setForm({ name: '', email: '', subject: '', message: '' });
   };
 
@@ -139,15 +141,15 @@ export default function ContactPage() {
         <section className="mt-16 sm:mt-24" data-testid="contact-store-locations">
           <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
             <div>
-              <div className="cp-eyebrow">Kunjungi Kami</div>
+              <div className="cp-eyebrow">{c.stores_eyebrow}</div>
               <Reveal>
                 <h2 className="cp-headline text-3xl sm:text-5xl mt-2 leading-none">
-                  Toko <em className="not-italic italic text-[color:var(--cp-brass)]">offline</em> kami.
+                  {c.stores_title} <em className="not-italic italic text-[color:var(--cp-brass)]">{c.stores_accent}</em> {c.stores_after}
                 </h2>
               </Reveal>
             </div>
             <Link to="/lokasi" className="inline-flex items-center gap-1 cp-mono uppercase text-[11px] tracking-[0.2em] text-black/60 hover:text-black">
-              Lihat semua lokasi ({locations.length}) <ArrowRight className="h-3.5 w-3.5" />
+              {c.stores_link_label} ({locations.length}) <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
