@@ -18,6 +18,17 @@ block `collector-parfum`, Certbot webroot), dokumentasi `DEPLOYMENT_VPS.md`.
 
 ## Yang dikerjakan
 - **s.d. 2026-08-04**: E1–E7, E9–E13 selesai (lihat HANDOFF.md). Deploy IP-only ke VPS.
+- **2026-09-26 — CMS lanjutan (E14)**:
+  - Audit: semua section CMS lama berfungsi; `category_section` mati (tidak dirender) → dihapus.
+    Halaman yang belum bisa diedit (Toko, Lokasi, Voucher, heading "Kunjungi Kami" di Kontak,
+    SEO global) kini punya section CMS: `shop_page`, `locations_page`, `voucher_page`,
+    field tambahan `contact`, `seo` (site_name, judul/deskripsi beranda, default description, OG image).
+  - Fitur baru: `home_layout` (urutan drag & tampil/sembunyikan 15 section Beranda, UI baris
+    ringkas), `gallery` (galeri foto multi-pilih dari Media Manager, layout masonry/grid/strip,
+    caption + tautan, lightbox), tipe field backend `toggle` / `select` / `gallery` (validasi coerce).
+  - Admin CMS: preview iframe berpindah ke halaman yang relevan (/shop, /lokasi, /voucher, /kontak,
+    /tentang), indikator "sudah diedit" akurat (schema kini mengirim `default`), hint per section.
+  - Testing agent iterasi 44: LULUS 100% (backend 6/6, semua alur frontend).
 - **2026-09-21 (sesi ini)** — domain + SSL:
   - `deploy.sh`: cek DNS sebelum Certbot (exit 1 bila A record belum ke IP VPS);
     `INCLUDE_WWW=auto|yes|no` (www ikut hanya bila DNS-nya sudah ke VPS); CORS otomatis

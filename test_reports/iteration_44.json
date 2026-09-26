@@ -1,0 +1,33 @@
+{
+  "summary": "Comprehensive backend + frontend testing of Collector Parfum CMS (E9 extended: seo, home_layout, gallery, shop_page, locations_page, voucher_page + contact new fields). Backend pytest 6/6 passed. Frontend Playwright validated: section list, home_layout FAQ toggle hide/show, gallery multi-pick from MediaManager + save + storefront render (masonry) + lightbox, revert-to-default, all page preview iframe routes (shop_page->/shop, locations_page->/lokasi, voucher_page->/voucher, contact->/kontak, about->/tentang), and shop_page title edit end-to-end (title 'Semua aroma, satu' visible on /shop). Storefront regression clean.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "All admin pages", "issues": ["Console warning: cdn.tailwindcss.com should not be used in production. Consider replacing CDN with the installed PostCSS/CLI build to remove the warning (frontend uses tailwind PostCSS already, so investigate stray CDN <script> reference)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cms.py",
+    "/app/test_reports/pytest/cms_results.xml"
+  ],
+  "action_items": [
+    "Investigate/remove any stray reference to cdn.tailwindcss.com in the app (search index.html/public/*) — non-blocking, just a console warning.",
+    "Optional UX: after revert-to-default with unchanged payload, the 'Sudah diedit' green dot correctly disappears; minor cosmetic — one lingering indicator observed once during rapid revert cycles (likely stored data equals default only after a subsequent refetch)."
+  ],
+  "critical_code_review_comments": [
+    "content_registry.py is ~460 lines and dense — consider splitting SECTIONS by group (global/home/pages) into separate modules for maintainability.",
+    "services/content.py _coerce: gallery caption/to string cast on None -> str(None) becomes 'None' via `str(row.get('caption') or '')` — properly guarded with `or ''`. Good.",
+    "AdminContentPage.js select() blocks navigation on dirty via window.confirm(); this can trap in automation but is fine for humans. Consider a non-blocking confirm dialog with data-testid for testability.",
+    "Section 'category_section' correctly removed from SECTIONS and default_content; GET /api/content excludes it. Verified."
+  ],
+  "updated_files": ["/app/backend/tests/test_cms.py"],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% (all listed flows verified)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 (from /app/memory/test_credentials.md, verified working)",
+  "seed_data_creation": "None. All CMS mutations reverted to defaults after tests (gallery items=[], home_layout gallery visible=false, shop_page title back to 'Semua parfum, satu').",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend CMS tests live at /app/backend/tests/test_cms.py (pytest). Media Manager has 4 external Unsplash thumbnails (id via [data-testid=admin-media-tile]). MediaPickerDialog: click tile's inner <button> (onOpen=toggle) OR data-testid=admin-media-tile-checkbox; confirm via data-testid=admin-media-picker-confirm. Home layout toggles use data-testid=cms-toggle-visible-<i> where i is index in home_layout.sections (14=FAQ, 11=Gallery). Storefront gallery testids: home-gallery, home-gallery-item-<i>, home-gallery-strip/grid/masonry.",
+  "rca of the issue": "No functional issues observed. Backend coerce validated: bogus select->'', invalid gallery items dropped/normalized, toggle string->bool. Preview iframe route mapping is correct — an earlier flaky FAIL for shop_page was caused by a residual dirty-state confirm dialog blocking select(); confirmed correct once dialog auto-accept was installed."
+}

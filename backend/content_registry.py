@@ -146,7 +146,7 @@ SECTIONS = [
         "key": "home_layout", "label": "Tata Letak Beranda", "group": "Beranda",
         "fields": [REP("sections", "Urutan & tampil/sembunyikan section (geser untuk mengurutkan)",
                        [SEL("key", "Section", HOME_SECTIONS), TOG("visible", "Tampilkan")])],
-        "default": {"sections": [{"key": o["value"], "visible": o["value"] != "gallery"} for o in HOME_SECTIONS]},
+        "default": {"sections": [{"key": o["value"], "visible": True} for o in HOME_SECTIONS]},
     },
     {
         "key": "hero", "label": "Hero (Beranda)", "group": "Beranda",
